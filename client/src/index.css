@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@100..900&display=swap');
+@import "tailwindcss";
+@theme{
+  --font-inter1:"Noto Sans Bengali", "sans-serif";
+
+}
+body{
+  font-family: "Noto Sans Bengali";
+  font-optical-sizing: auto;
+  
+}
+
+.shadows{
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 10px 0px;
+}
+.shados{
+  box-shadow: rgb(207, 207, 207) 0px 0px 8px 2px;
+}
+
+button {
+  cursor: pointer !important;
+}
+

@@ -1,0 +1,180 @@
+/**
+ * Package Management Service
+ * Handles all package-related API calls
+ */
+import axios from 'axios';
+import { getBaseUrl } from '../utils/baseurls';
+
+class PackageService {
+  // Helper method to get authorization headers
+  getAuthHeaders() {
+    const token = localStorage.getItem('access_token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  // Get all available packages
+  async getAvailablePackages() {
+    try {
+      const response = await axios.get(`${getBaseUrl()}/api/packages/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching packages:', error);
+      throw error;
+    }
+  }
+
+  // Get package details by ID
+  async getPackageDetails(packageId) {
+    try {
+      const response = await axios.get(`${getBaseUrl()}/api/packages/${packageId}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching package details:', error);
+      throw error;
+    }
+  }
+
+  // Purchase a package
+  async purchasePackage(packageId, paymentMethod = 'eps') {
+    try {
+      console.log('Attempting to purchase package:', packageId);
+      console.log('Auth headers:', this.getAuthHeaders());
+      
+      const response = await axios.post(`${getBaseUrl()}/api/packages/purchase/`, {
+        package_id: packageId,
+        payment_method: paymentMethod
+      }, {
+        headers: this.getAuthHeaders()
+      });
+      
+      console.log('Purchase response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error purchasing package:', error);
+      console.error('Error response:', error.response?.data);
+      
+      // If it's a network error or backend is down
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        throw new Error('Backend server is not running. Please start the Django server.');
+      }
+      
+      // If it's an authentication error
+      if (error.response?.status === 401) {
+        throw new Error('Please log in to purchase packages.');
+      }
+      
+      // If it's a validation error
+      if (error.response?.status === 400) {
+        const message = error.response?.data?.message || 'Invalid request data';
+        throw new Error(message);
+      }
+      
+      // Generic error with backend response
+      const message = error.response?.data?.message || error.message || 'Unknown error occurred';
+      throw new Error(message);
+    }
+  }
+
+  // Get user's packages (current and history)
+  async getUserPackages() {
+    try {
+      const response = await axios.get(`${getBaseUrl()}/api/user/packages/`, {
+        headers: this.getAuthHeaders()
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user packages:', error);
+      throw error;
+    }
+  }
+
+  // Get user's package usage stats
+  async getUserPackageUsage() {
+    try {
+      const response = await axios.get(`${getBaseUrl()}/api/user/packages/usage/`, {
+        headers: this.getAuthHeaders()
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching package usage:', error);
+      throw error;
+    }
+  }
+
+  // Get user's package usage
+  async getPackageUsage() {
+    try {
+      const response = await axios.get(`${getBaseUrl()}/api/user/packages/usage/`, {
+        headers: this.getAuthHeaders()
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching package usage:', error);
+      throw error;
+    }
+  }
+
+  // Calculate days until expiration
+  getDaysUntilExpiration(expirationDate) {
+    const now = new Date();
+    const expiry = new Date(expirationDate);
+    const timeDiff = expiry.getTime() - now.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    return daysDiff;
+  }
+
+  // Get user-friendly duration display
+  getDurationDisplay(durationType, durationDays = null) {
+    switch (durationType) {
+      case 'monthly':
+        return '30 Days';
+      case 'yearly':
+        return '1 Year';
+      case 'lifetime':
+        return 'Lifetime';
+      default:
+        return `${durationDays} Days`;
+    }
+  }
+
+  // Check if package is popular
+  isPopular(packageData) {
+    return packageData.is_popular;
+  }
+
+  /**
+   * Format price in Bangladeshi Taka
+   * @param {number} price - Price amount
+   * @returns {string} Formatted price string
+   */
+  static formatPrice(price) {
+    return `৳${price.toLocaleString('bn-BD')}`;
+  }
+
+  /**
+   * Get duration display text
+   * @param {string} durationType - Duration type (monthly, yearly, lifetime)
+   * @returns {string} Duration display text
+   */
+  static getDurationDisplay(durationType) {
+    const durations = {
+      'monthly': 'প্রতি মাস',
+      'yearly': 'প্রতি বছর',
+      'lifetime': 'আজীবন'
+    };
+    return durations[durationType] || durationType;
+  }
+
+  /**
+   * Get package type color classes
+   * @param {string} packageType - Package type (regular, proseller)
+   * @returns {string} CSS classes for styling
+   */
+  static getPackageTypeColor(packageType) {
+    return packageType === 'proseller' 
+      ? 'bg-purple-100 text-purple-800'
+      : 'bg-blue-100 text-blue-800';
+  }
+}
+
+export default new PackageService();
