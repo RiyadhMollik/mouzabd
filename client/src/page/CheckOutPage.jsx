@@ -45,7 +45,7 @@ const CheckoutPage = () => {
     email: '',
     password: '',
     phone_number: '',
-    mobile_number: '',     // ✅ added to capture modal/register input
+    mobile_number: '',     
     whatsapp: '',
     paymentMethod:'eps'
   });
