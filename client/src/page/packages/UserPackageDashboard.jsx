@@ -18,6 +18,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import PackageService from '../../services/PackageService';
+import DailyOrderStatus from '../../component/packagecomponent/DailyOrderStatus';
 
 const UserPackageDashboard = () => {
   const navigate = useNavigate();
@@ -201,6 +202,14 @@ const UserPackageDashboard = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Daily Order Status */}
+            {currentPackage.package.daily_order_limit > 0 && (
+              <div className="mt-6">
+                <h4 className="font-semibold text-gray-900 mb-3">দৈনিক অর্ডার স্ট্যাটাস:</h4>
+                <DailyOrderStatus showDetails={true} className="bg-gray-50" />
               </div>
             )}
 

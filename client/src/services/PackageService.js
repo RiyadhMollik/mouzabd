@@ -4,11 +4,12 @@
  */
 import axios from 'axios';
 import { getBaseUrl } from '../utils/baseurls';
+import { getToken } from '../utils/authUtils';
 
 class PackageService {
   // Helper method to get authorization headers
   getAuthHeaders() {
-    const token = localStorage.getItem('access_token');
+    const token = getToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
@@ -101,6 +102,79 @@ class PackageService {
     }
   }
 
+  // Daily Order Limit Methods
+
+  // Get daily order status
+  async getDailyOrderStatus() {
+    try {
+      const response = await axios.get(`${getBaseUrl()}/api/user/packages/daily-status/`, {
+        headers: this.getAuthHeaders()
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching daily order status:', error);
+      throw error;
+    }
+  }
+
+  // Validate if user can place an order (reserves slot if available)
+  async validateOrderLimit(fileCount = 1) {
+    try {
+      const response = await axios.post(`${getBaseUrl()}/api/user/packages/validate-order/`, {
+        file_count: fileCount
+      }, {
+        headers: this.getAuthHeaders()
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error validating order limit:', error);
+      throw error;
+    }
+  }
+
+  // Get daily usage history
+  async getDailyUsageHistory() {
+    try {
+      const response = await axios.get(`${getBaseUrl()}/api/user/packages/usage-history/`, {
+        headers: this.getAuthHeaders()
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching usage history:', error);
+      throw error;
+    }
+  }
+
+  // Check if user has an active package with daily limits
+  async hasActivePackageWithLimits() {
+    try {
+      const packageData = await this.getUserPackages();
+      if (packageData?.current_package && packageData.current_package.package) {
+        const dailyLimit = packageData.current_package.package.daily_order_limit;
+        return {
+          hasPackage: true,
+          hasLimits: dailyLimit > 0,
+          dailyLimit: dailyLimit,
+          packageName: packageData.current_package.package.name
+        };
+      }
+      return {
+        hasPackage: false,
+        hasLimits: false,
+        dailyLimit: 0,
+        packageName: null
+      };
+    } catch (error) {
+      console.error('Error checking package status:', error);
+      return {
+        hasPackage: false,
+        hasLimits: false,
+        dailyLimit: 0,
+        packageName: null
+      };
+    }
+  }
+
   // Get user's package usage
   async getPackageUsage() {
     try {
@@ -163,6 +237,19 @@ class PackageService {
       'lifetime': 'আজীবন'
     };
     return durations[durationType] || durationType;
+  }
+
+  // Process a free order within daily limits
+  async processFreeOrder(orderData) {
+    try {
+      const response = await axios.post(`${getBaseUrl()}/api/user/packages/process-free-order/`, orderData, {
+        headers: this.getAuthHeaders()
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error processing free order:', error);
+      throw error;
+    }
   }
 
   /**

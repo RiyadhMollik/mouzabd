@@ -15,6 +15,7 @@ import {
   Clock
 } from 'lucide-react';
 import PackageService from '../../services/PackageService';
+import { getToken } from '../../utils/authUtils';
 
 const PackageStatus = ({ className = "" }) => {
   const navigate = useNavigate();
@@ -33,11 +34,19 @@ const PackageStatus = ({ className = "" }) => {
 
   const loadCurrentPackage = async () => {
     try {
+      // Check if user is authenticated
+      const token = getToken();
+      if (!token) {
+        setCurrentPackage(null);
+        return;
+      }
+
       const packages = await PackageService.getUserPackages();
       const active = packages.find(pkg => pkg.is_active);
       setCurrentPackage(active);
     } catch (error) {
       console.error('Error loading current package:', error);
+      setCurrentPackage(null);
     } finally {
       setLoading(false);
     }

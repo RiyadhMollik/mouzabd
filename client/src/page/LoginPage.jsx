@@ -20,7 +20,8 @@ export default function LoginPage() {
   const { logIn, loading } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || "/";
+  const from = location.state?.from?.pathname || location.state?.returnUrl || "/";
+  const loginMessage = location.state?.message;
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -182,6 +183,13 @@ export default function LoginPage() {
               <p className="mt-2 text-sm text-gray-600">
                 Enter your credentials to access your account
               </p>
+              
+              {/* Show login message if redirected from package/order */}
+              {loginMessage && (
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-700">{loginMessage}</p>
+                </div>
+              )}
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">

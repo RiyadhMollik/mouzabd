@@ -3,7 +3,9 @@
  * Displays individual package information with features and purchase button
  */
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Crown, Star, Check, Zap } from 'lucide-react';
+import { requireAuth } from '../../utils/authUtils';
 
 const PackageCard = ({ 
   packageData, 
@@ -12,6 +14,7 @@ const PackageCard = ({
   currentPackage = null,
   className = "" 
 }) => {
+  const navigate = useNavigate();
   const {
     id,
     name,
@@ -49,9 +52,17 @@ const PackageCard = ({
   };
 
   const handlePurchase = () => {
-    if (!isLoading && !isCurrentPackage) {
-      onPurchase(packageData);
+    if (isLoading || isCurrentPackage) {
+      return;
     }
+
+    // Check authentication and redirect if needed
+    if (!requireAuth(navigate, 'purchase', '/packages')) {
+      return;
+    }
+
+    // User is logged in, proceed with purchase
+    onPurchase(packageData);
   };
 
   return (

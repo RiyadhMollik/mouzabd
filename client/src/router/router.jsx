@@ -21,6 +21,7 @@ import ContactUs from "../page/ContactUs";
 import SuccessPage from "../page/SucessPage";
 import ForgotPasswordPage from "../page/ForgotPasswordPage";
 import FaqPage from "../page/FaqPage";
+import OrderSuccessPage from "../page/OrderSuccessPage";
 
 // EPS Payment Pages
 import PaymentSuccess from "../page/payment/PaymentSuccess";
@@ -98,6 +99,10 @@ children: [
         { 
           path: '/checkout',
           element:<CheckOutPage/>
+        },
+        { 
+          path: '/order-success',
+          element:<OrderSuccessPage/>
         },
          { 
           path: '/contactus',

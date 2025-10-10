@@ -14,6 +14,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import translate from 'translate-google-api';
+import packageService from '../services/PackageService';
 
 
 const extrafeaturesData = () => {
@@ -46,7 +47,7 @@ const CheckoutPage = () => {
     phone_number: '',
     mobile_number: '',     // ✅ added to capture modal/register input
     whatsapp: '',
-    paymentMethod:'bkash'
+    paymentMethod:'eps'
   });
 
   const [selectedTab,setselectedTab]=useState("");
@@ -54,6 +55,11 @@ const CheckoutPage = () => {
   const [selectedExtraFeatures, setSelectedExtraFeatures] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // Free order state
+  const [isFreeOrder, setIsFreeOrder] = useState(checkoutData?.isFreeOrder || false);
+  const [orderValidationResult, setOrderValidationResult] = useState(checkoutData?.validationResult || null);
+  const [isCheckingLimits, setIsCheckingLimits] = useState(!checkoutData?.isFreeOrder);
 
   // Additional features & modal
   const [showAdditionalModal, setShowAdditionalModal] = useState(false);
@@ -64,18 +70,17 @@ const CheckoutPage = () => {
 
   const { data: extraFeatures, isLoading: featuresLoading, error: featuresError } = extrafeaturesData();
 
-  useEffect(() => {
-    if (extraFeatures?.data && extraFeatures.data.length > 0 && selectedExtraFeatures.length === 0) {
-      const sortedFeatures = getSortedExtraFeatures();
-      if (sortedFeatures.length > 0) {
-        setSelectedExtraFeatures([sortedFeatures[0].id]);
-      }
-    }
-  }, [extraFeatures]);
-
+  // Extract data from checkoutData first
   if (!checkoutData) {
     return <HandleCheckout/>;
   }
+
+  console.log('🔍 CheckoutData received:', {
+    checkoutData,
+    isFreeOrderFlag: checkoutData?.isFreeOrder,
+    validationResult: checkoutData?.validationResult,
+    totalAmount: checkoutData?.totalAmount
+  });
 
   const isFileBased = checkoutData.selectedFiles && Array.isArray(checkoutData.selectedFiles);
   const isDivisionBased = checkoutData.selectedOption && checkoutData.searchInfo;
@@ -125,6 +130,67 @@ const CheckoutPage = () => {
     ({ selectedFiles = [], selectedFileIds = [], packageInfo = {}, totalAmount = 0, fileCount = 0, searchInfo = {} } = checkoutData);
   }
 
+  // Check if validation result already exists from previous page
+  const existingValidation = checkoutData.validationResult || checkoutData.isFreeOrder;
+  console.log('🎯 Existing validation from checkoutData:', {
+    isFreeOrder: checkoutData.isFreeOrder,
+    validationResult: checkoutData.validationResult,
+    existingValidation
+  });
+
+  useEffect(() => {
+    if (extraFeatures?.data && extraFeatures.data.length > 0 && selectedExtraFeatures.length === 0) {
+      const sortedFeatures = getSortedExtraFeatures();
+      if (sortedFeatures.length > 0) {
+        setSelectedExtraFeatures([sortedFeatures[0].id]);
+      }
+    }
+  }, [extraFeatures]);
+
+  // Check if order qualifies as free (within daily limits)
+  useEffect(() => {
+    const checkFreeOrderEligibility = async () => {
+      // First check if we already have validation result from previous page
+      if (checkoutData.isFreeOrder || (checkoutData.validationResult?.within_daily_limit)) {
+        console.log('✅ Using existing validation result - FREE ORDER');
+        setIsFreeOrder(true);
+        setOrderValidationResult(checkoutData.validationResult);
+        setIsCheckingLimits(false);
+        return;
+      }
+
+      if (!userdata || !fileCount) {
+        setIsCheckingLimits(false);
+        return;
+      }
+
+      try {
+        console.log('🔍 Checking free order eligibility for', fileCount, 'files');
+        const validationResult = await packageService.validateOrderLimit(fileCount);
+        
+        console.log('📊 Free order validation result:', validationResult);
+        
+        if (validationResult.can_order && validationResult.within_daily_limit) {
+          setIsFreeOrder(true);
+          setOrderValidationResult(validationResult);
+          console.log('✅ Order qualifies as FREE within daily limits');
+        } else {
+          setIsFreeOrder(false);
+          setOrderValidationResult(validationResult);
+          console.log('💰 Order requires payment - outside daily limits');
+        }
+      } catch (error) {
+        console.error('❌ Error checking free order eligibility:', error);
+        setIsFreeOrder(false);
+        setOrderValidationResult(null);
+      } finally {
+        setIsCheckingLimits(false);
+      }
+    };
+
+    checkFreeOrderEligibility();
+  }, [userdata, fileCount, checkoutData.isFreeOrder, checkoutData.validationResult]);
+
   const getSortedExtraFeatures = () => {
     if (!extraFeatures?.data) return [];
     return [...extraFeatures.data].sort((a, b) => {
@@ -136,6 +202,41 @@ const CheckoutPage = () => {
   };
 
   const calculatePrices = () => {
+    console.log('💰 calculatePrices called with:', {
+      isFreeOrder,
+      orderValidationResult,
+      within_daily_limit: orderValidationResult?.within_daily_limit,
+      isCheckingLimits
+    });
+
+    // If this is a free order within daily limits, return zero prices
+    if (isFreeOrder && orderValidationResult?.within_daily_limit) {
+      console.log('💚 Calculating prices for FREE order');
+      return {
+        baseAmount: 0,
+        extraFeaturesTotal: 0,
+        additionalFeaturesTotal: 0,
+        subtotal: 0,
+        finalTotal: 0,
+        isFirstFeatureSelected: false,
+        isFreeOrder: true
+      };
+    }
+
+    // Also check if checkoutData indicates this is a free order
+    if (isFreeOrder || checkoutData.isFreeOrder) {
+      console.log('💚 Calculating prices for FREE order (from checkoutData)');
+      return {
+        baseAmount: 0,
+        extraFeaturesTotal: 0,
+        additionalFeaturesTotal: 0,
+        subtotal: 0,
+        finalTotal: 0,
+        isFirstFeatureSelected: false,
+        isFreeOrder: true
+      };
+    }
+
     const sortedFeatures = getSortedExtraFeatures();
     const firstFeatureId = sortedFeatures.length > 0 ? sortedFeatures[0].id : null;
     const isFirstFeatureSelected = firstFeatureId && selectedExtraFeatures.includes(firstFeatureId);
@@ -198,11 +299,19 @@ const CheckoutPage = () => {
       additionalFeaturesTotal: validAdditionalFeaturesTotal,
       subtotal: isNaN(subtotal) ? 0 : subtotal,
       finalTotal: isNaN(finalTotal) ? 0 : finalTotal,
-      isFirstFeatureSelected
+      isFirstFeatureSelected,
+      isFreeOrder: false
     };
   };
 
   const prices = calculatePrices();
+  
+  console.log('📊 Final prices object:', {
+    prices,
+    isFreeOrder,
+    isCheckingLimits,
+    orderValidationResult
+  });
 
   const handleExtraFeatureToggle = (featureId) => {
     const feature = extraFeatures?.data?.find(f => f.id === featureId);
@@ -499,7 +608,8 @@ const handleSubmit = async () => {
       throw new Error('Package information is missing');
     }
 
-    if (!prices.finalTotal || prices.finalTotal <= 0) {
+    // For free orders, we don't need to validate total amount
+    if (!isFreeOrder && (!prices.finalTotal || prices.finalTotal <= 0)) {
       throw new Error('Invalid total amount');
     }
 
@@ -518,8 +628,19 @@ const handleSubmit = async () => {
       package: packageInfo?.id || packageInfo?.package_id || packageInfo?.pk,
       amount: parseFloat(prices.finalTotal.toFixed(2)),
       file_name: fileNames,
+      file_count: fileCount, // Add explicit file count
       payment_method: formData.paymentMethod || 'bkash',
     };
+
+    console.log('💳 Purchase data preparation:', {
+      isFreeOrder,
+      finalTotal: prices.finalTotal,
+      amount: purchaseData.amount,
+      packageId: purchaseData.package,
+      packageInfo: packageInfo,
+      fileCount: fileCount,
+      checkoutDataIsFree: checkoutData.isFreeOrder
+    });
 
     if (isDivisionBased && searchInfo) {
       purchaseData.search_info = searchInfo;
@@ -576,6 +697,50 @@ const handleSubmit = async () => {
 
     console.log('Final purchase data:', purchaseData);
 
+    // For free orders, add validation result to the purchase data
+    if (isFreeOrder && orderValidationResult) {
+      purchaseData.is_free_order = true;
+      purchaseData.validation_result = orderValidationResult;
+    }
+
+    // For free orders, skip the purchase API and handle directly
+    if (isFreeOrder || parseFloat(prices.finalTotal) === 0) {
+      console.log('✅ Processing free order via API');
+      
+      try {
+        // Call the free order API
+        const freeOrderResponse = await packageService.processFreeOrder(purchaseData);
+        
+        console.log('📝 Free order API response:', freeOrderResponse);
+        
+        if (freeOrderResponse.success) {
+          // Handle successful free order
+          toast.success('অর্ডার সফল হয়েছে! বিনামূল্যে প্রক্রিয়া করা হয়েছে।', {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            theme: "colored",
+          });
+          
+          // Redirect to map list after a short delay
+          setTimeout(() => {
+            navigate('/map/list');
+          }, 2000);
+          
+          return; // Exit early for free orders
+        } else {
+          throw new Error(freeOrderResponse.message || 'Failed to process free order');
+        }
+        
+      } catch (error) {
+        console.error('❌ Free order API error:', error);
+        throw new Error(error.response?.data?.message || error.message || 'Failed to process free order');
+      }
+    }
+
     const response = await processPurchase(purchaseData);
 
     // 👉 Auto login
@@ -591,7 +756,7 @@ const handleSubmit = async () => {
       }
     }
 
-    // 👉 Payment handling
+    // 👉 Payment handling (only for paid orders now)
     if (formData.paymentMethod === 'eps') {
       // Handle EPS payment
       console.log('💳 Processing EPS payment...');
@@ -631,8 +796,27 @@ const handleSubmit = async () => {
       console.log('💳 Redirecting to payment URL:', response.payment_url);
       window.location.href = response.payment_url;
     } else if (response.success || response.status === 'success') {
-      alert('Purchase completed successfully!');
-      navigate('/');
+      // Check if this is a free order (from isFreeOrder flag or zero amount)
+      const orderIsFree = isFreeOrder || checkoutData?.isFreeOrder || parseFloat(prices.finalTotal) === 0;
+      
+      if (orderIsFree) {
+        console.log('✅ Free order completed successfully, redirecting to map list');
+        toast.success('অর্ডার সফল হয়েছে!', {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "colored",
+        });
+        setTimeout(() => {
+          navigate('/map/list');
+        }, 2000);
+      } else {
+        alert('Purchase completed successfully!');
+        navigate('/');
+      }
     } else {
       console.warn('⚠️ Unexpected response format:', response);
       alert('Purchase initiated successfully, but no payment URL received.');
@@ -755,6 +939,9 @@ const handleSubmit = async () => {
             handleFeatureDeselectionFromModal={handleFeatureDeselectionFromModal}
             isDeliveryAddressRequired={isDeliveryAddressRequired}
             getDeliveryAddressMessage={getDeliveryAddressMessage}
+            isFreeOrder={isFreeOrder}
+            isCheckingLimits={isCheckingLimits}
+            orderValidationResult={orderValidationResult}
           />
 
           <RightCheckout  
@@ -776,6 +963,9 @@ const handleSubmit = async () => {
             deliveryAddress={deliveryAddress}
             mobileNumber = {mobileNumber}
             isDeliveryAddressRequired={isDeliveryAddressRequired}
+            isFreeOrder={isFreeOrder}
+            isCheckingLimits={isCheckingLimits}
+            orderValidationResult={orderValidationResult}
           />
           <ToastContainer 
             position="top-right" 

@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import { CreditCard, Shield, Zap, Crown, ArrowLeft, Check } from 'lucide-react';
 import PackageCard from '../../component/packagecomponent/PackageCard';
 import PackageService from '../../services/PackageService';
+import { requireAuth, getToken } from '../../utils/authUtils';
 
 const PackageSelectionPage = () => {
   const navigate = useNavigate();
@@ -25,17 +26,31 @@ const PackageSelectionPage = () => {
   const loadPackageData = async () => {
     try {
       setLoading(true);
-      const [availablePackages, currentPackages] = await Promise.all([
-        PackageService.getAvailablePackages(),
-        PackageService.getUserPackages()
-      ]);
+      
+      // Check if user is authenticated
+      const token = getToken();
+      
+      // Always fetch available packages (public)
+      const availablePackages = await PackageService.getAvailablePackages();
+      
+      // Only fetch user packages if authenticated
+      let currentPackages = null;
+      if (token) {
+        try {
+          currentPackages = await PackageService.getUserPackages();
+        } catch (error) {
+          console.warn('Could not fetch user packages (user may not be authenticated):', error);
+          currentPackages = null;
+        }
+      }
       
       // Handle the case where API might return an object instead of array
       console.log('Available packages response:', availablePackages);
       console.log('Current packages response:', currentPackages);
       
       const packagesArray = Array.isArray(availablePackages) ? availablePackages : availablePackages?.packages || [];
-      const userPackagesArray = Array.isArray(currentPackages) ? currentPackages : currentPackages?.packages || [];
+      const userPackagesArray = currentPackages ? 
+        (Array.isArray(currentPackages) ? currentPackages : currentPackages?.packages || []) : [];
       
       setPackages(packagesArray);
       setUserPackages(userPackagesArray);
@@ -49,6 +64,11 @@ const PackageSelectionPage = () => {
 
   const handlePackagePurchase = async (packageData) => {
     try {
+      // Check authentication and redirect if needed
+      if (!requireAuth(navigate, 'purchase', '/packages')) {
+        return;
+      }
+
       setSelectedPackageId(packageData.id);
       setPurchaseLoading(true);
 

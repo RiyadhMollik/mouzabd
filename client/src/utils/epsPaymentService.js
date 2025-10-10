@@ -3,6 +3,7 @@
  */
 import axios from 'axios';
 import { getBaseUrl } from './baseurls';
+import { getToken } from './authUtils';
 
 // Create axios instance with base configuration
 const epsApi = axios.create({
@@ -16,7 +17,7 @@ const epsApi = axios.create({
 // Request interceptor to add auth token if available
 epsApi.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
+    const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

@@ -13,9 +13,13 @@ import ResultSearchBar from "../component/ResultPageComponent/ResultSearchBar";
 import SummaryBox from "../component/ResultPageComponent/SummaryBox";
 import ResultCard from "../component/ResultPageComponent/ResultCard";
 import ResultModal from "../component/ResultPageComponent/ResultModal";
+import DailyOrderStatus from "../component/packagecomponent/DailyOrderStatus";
+import OrderValidationModal from "../component/packagecomponent/OrderValidationModal";
 import { decodeToken } from "../utils/TokenDecoder";
 import { packageApi } from "../utils/api/CommonApi";
 import { convertNumberToBangla } from "../utils/englishToBangla";
+import PackageService from "../services/PackageService";
+import { requireAuth, getToken } from "../utils/authUtils";
 
 const ResultPage = () => {
   // State
@@ -31,6 +35,10 @@ const ResultPage = () => {
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [downloadLoading, setDownloadLoading] = useState(false);
+  
+  // Order validation modal state
+  const [showOrderValidation, setShowOrderValidation] = useState(false);
+  const [orderData, setOrderData] = useState(null);
   
   // Refs
   const modalRef = useRef(null);
@@ -480,17 +488,22 @@ console.log(selectedPackage)
   };
 
   // Handle purchase
-const handlePurchase = () => {
+const handlePurchase = async () => {
   // ✅ Prevent purchase when no files are selected
   if (selectedFiles.length === 0) {
     //alert('দয়া করে কমপক্ষে একটি ফাইল নির্বাচন করুন'); // "Please select at least one file"
     return;
   }
 
+  // Check authentication and redirect if needed
+  if (!requireAuth(navigate, 'order', location.pathname + location.search)) {
+    return;
+  }
+
   // Get selected file details
   const selectedFileDetails = files.filter(file => selectedFiles.includes(file.id));
   
-  // Checkout data to pass
+  // Prepare checkout data
   const checkoutData = {
     selectedFiles: selectedFileDetails,
     selectedFileIds: selectedFiles,
@@ -512,7 +525,62 @@ const handlePurchase = () => {
     timestamp: new Date().toISOString()
   };
 
-  // Navigate to checkout page with data
+  // Check if user has package with daily limits
+  try {
+    const packageInfo = await PackageService.hasActivePackageWithLimits();
+    
+    if (!packageInfo.hasPackage || !packageInfo.hasLimits) {
+      // No package or unlimited package, proceed with normal payment
+      proceedToCheckout(checkoutData);
+      return;
+    }
+
+    // User has package with limits, show validation modal
+    setOrderData({
+      ...checkoutData,
+      orderDetails: {
+        title: `${selectedFiles.length} ফাইল অর্ডার`,
+        price: totalPrice,
+        description: `${selectedFiles.length}টি ফাইলের জন্য অর্ডার`,
+        selectedFiles: selectedFiles  // Pass selected files for file count
+      }
+    });
+    setShowOrderValidation(true);
+    
+  } catch (error) {
+    console.error('Error checking package status:', error);
+    // On error, proceed with normal payment flow
+    proceedToCheckout(checkoutData);
+  }
+};
+
+// Handle free order (within daily limit)
+const handleFreeOrder = (validationResult) => {
+  setShowOrderValidation(false);
+  
+  // Add free order flag to order data
+  const freeOrderData = {
+    ...orderData,
+    isFreeOrder: true,
+    validationResult: validationResult,
+    totalAmount: 0 // Free order
+  };
+  
+  // Navigate directly to checkout page for free orders
+  navigate('/checkout', { 
+    state: freeOrderData,
+    replace: false 
+  });
+};
+
+// Handle paid order (daily limit exceeded)
+const handlePaidOrder = () => {
+  setShowOrderValidation(false);
+  proceedToCheckout(orderData);
+};
+
+// Standard checkout flow
+const proceedToCheckout = (checkoutData) => {
   navigate('/checkout', { 
     state: checkoutData,
     replace: false 
@@ -675,6 +743,13 @@ console.log(filteredAndSearchedFiles)
 
         {/* Summary box - responsive positioning */}
           <SummaryBox totalPrice={totalPrice} selectedPackage={selectedPackage} selectedFiles={selectedFiles} handlePurchase={handlePurchase}/>
+          
+        {/* Daily Order Status - Show for authenticated users */}
+        {getToken() && (
+          <div className="mt-4">
+            <DailyOrderStatus showDetails={true} />
+          </div>
+        )}
       </div>
 
       {/* Beautiful Modal for file preview */}
@@ -696,6 +771,15 @@ console.log(filteredAndSearchedFiles)
           handlePurchase={handlePurchase}
         />
       )}
+
+      {/* Order Validation Modal */}
+      <OrderValidationModal
+        isOpen={showOrderValidation}
+        onClose={() => setShowOrderValidation(false)}
+        onProceedFree={handleFreeOrder}
+        onProceedPaid={handlePaidOrder}
+        orderDetails={orderData?.orderDetails || {}}
+      />
 
       {/* Click outside to close filter menu */}
       {showFilterMenu && (

@@ -494,7 +494,7 @@ const [activeTab, setActiveTab] = useState('quick');
           >
              {/* Fixed "or" tab styling */}
              <div className="flex justify-center pt-16 pb-4">
-  <div className="flex bg-gray-100 rounded-lg p-1 shadow-inner">
+  {/* <div className="flex bg-gray-100 rounded-lg p-1 shadow-inner">
     <button
       onClick={() => setActiveTab('quick')}
       className={`px-6 py-2 rounded-md font-medium md:text-lg font-inter1 transition-all duration-200 ${
@@ -515,7 +515,7 @@ const [activeTab, setActiveTab] = useState('quick');
     >
      বড় প্যাকেজ
     </button>
-  </div>
+  </div> */}
 </div>
             {/* Form Fields */}
 
