@@ -3,16 +3,8 @@ import React from 'react';
 
 const ResultCard = ({ file, selectedFiles, toggleFileSelection, getFileIcon, handleViewFile }) => {
   function cleanFilename(filename) {
-    // Only process if it ends with .pdf
-    if (filename.toLowerCase().endsWith(".pdf")) {
-      // Use regex to find the English/numeric part before .pdf
-      const match = filename.match(/[A-Za-z0-9_]+\.pdf$/);
-      if (match) {
-        return match[0]; // return only English + number part
-      }
-    }
-    // Return original if no match or not PDF
-    return filename;
+    // Remove extension from any filename
+    return filename ? filename.replace(/\.[^/.]+$/, '') : '';
   }
    if (file?.name?.toLowerCase()?.endsWith(".db")) return null; // Skip .db files
   return (
@@ -53,7 +45,7 @@ const ResultCard = ({ file, selectedFiles, toggleFileSelection, getFileIcon, han
           {/* Filename */}
           <span
             className="text-xs text-center truncate w-full px-1"
-            title={file.name}
+            title={cleanFilename(file.name)}
           >
             {cleanFilename(file.name)}
           </span>

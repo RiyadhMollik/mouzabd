@@ -367,7 +367,7 @@ const LeftCheckout = ({
             </h2>
 
             <div className="space-y-4">
-              {(packageInfo.is_static ? getSortedExtraFeatures().slice(0, 1) : getSortedExtraFeatures()).map((feature) => {
+              {(packageInfo?.is_static ? getSortedExtraFeatures().slice(0, 1) : getSortedExtraFeatures()).map((feature) => {
                 const isSelected = selectedExtraFeatures.includes(feature.id);
                 const displayPrice = parseFloat(feature.offer_price || feature.price || 0);
                 const hasOffer = feature.offer_price && parseFloat(feature.offer_price) < parseFloat(feature.price);
@@ -390,13 +390,13 @@ const LeftCheckout = ({
                 return (
                   <div 
                     key={feature.id}
-                    className={`border rounded-lg p-4 ${packageInfo.is_static ? '' : 'cursor-pointer hover:border-gray-300 transition-all duration-200'} ${
+                    className={`border rounded-lg p-4 ${packageInfo?.is_static ? '' : 'cursor-pointer hover:border-gray-300 transition-all duration-200'} ${
                       isSelected 
                         ? 'border-green-500 bg-green-50' 
                         : 'border-gray-200'
                     }`}
                     onClick={() => {
-                      if (!packageInfo.is_static) {
+                      if (!packageInfo?.is_static) {
                         handleExtraFeatureToggle(feature.id);
                       }
                     }}
@@ -407,11 +407,11 @@ const LeftCheckout = ({
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => {
-                            if (!packageInfo.is_static) {
+                            if (!packageInfo?.is_static) {
                               handleExtraFeatureToggle(feature.id);
                             }
                           }}
-                          disabled={packageInfo.is_static}
+                          disabled={packageInfo?.is_static}
                           className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                         />
                         <div>
@@ -448,7 +448,7 @@ const LeftCheckout = ({
                       <div className="text-right">
                         <div className="font-bold text-lg text-green-600">
                           {displayPrice === 0
-                            ? "Complimentary"
+                            ? ""
                             : `৳${convertNumberToBangla((displayPrice + additionalTotal).toFixed(2))}`}
                         </div>
                         {hasOffer && (
@@ -468,7 +468,7 @@ const LeftCheckout = ({
               })}
             </div>
 
-            {!packageInfo.is_static && selectedExtraFeatures.length > 0 && (
+            {!packageInfo?.is_static && selectedExtraFeatures.length > 0 && (
               <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <div className="text-sm text-green-800 mb-2">
                   <strong>{selectedExtraFeatures.length}</strong> extra feature{selectedExtraFeatures.length > 1 ? 's' : ''} selected

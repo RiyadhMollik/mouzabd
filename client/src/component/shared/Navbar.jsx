@@ -78,7 +78,7 @@ export default function Navbar() {
       {/* Mobile Logo and Menu Button Bar */}
       <div className="flex sm:hidden items-center justify-between px-4 py-2 bg-white shadow-sm relative z-10">
         <Link to="/" onClick={handleMobileMenuItemClick}>
-          <img src={img1} alt="Logo" className="h-12 w-12 shadow-md" />
+          <img src='logo.png' alt="Logo" className="h-12 w-12 shadow-md" />
         </Link>
         <div className="flex gap-2">
           <button
@@ -95,7 +95,7 @@ export default function Navbar() {
         <div className="container mx-auto">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
             <Link to="/">
-              <img src={img1} alt="Logo" className="h-12 w-12 shadow-md" />
+              <img src='logo.png' alt="Logo" className="h-12 w-12 shadow-md" />
             </Link>
 
             <div className="flex items-center space-x-6">

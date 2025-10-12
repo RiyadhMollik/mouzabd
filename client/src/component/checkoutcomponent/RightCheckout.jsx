@@ -147,9 +147,9 @@ const scrollToElement = (id) => {
                 <div key={index} className="flex items-center gap-3 p-2 hover:bg-white rounded-md transition-colors duration-150">
                   <File className="w-4 h-4 text-gray-500" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-700 truncate">
-                      {file.name || `File ${index + 1}`}
-                    </div>
+                      <div className="text-sm font-medium text-gray-700 truncate">
+                        {(file.name ? file.name.replace(/\.[^/.]+$/, '') : `File ${index + 1}`)}
+                      </div>
                     
                   </div>
                 </div>

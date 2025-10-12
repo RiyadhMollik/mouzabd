@@ -24,8 +24,8 @@ import BangladeshAdminForm from "./BangladeshAdminForm";
 export default function Heros() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-const [results, setResults] = useState([]);
-const [activeTab, setActiveTab] = useState('quick');
+  const [results, setResults] = useState([]);
+  const [activeTab, setActiveTab] = useState('quick');
   // Original Heros states
   const [showDropdown, setShowDropdown] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -182,7 +182,7 @@ const [activeTab, setActiveTab] = useState('quick');
       const searchResults = await AllSearchData(searchQuery);
 
       // Navigate to results page with quick search data
-    
+
       navigate("/result", {
         state: {
           searchType: "quick",
@@ -204,7 +204,7 @@ const [activeTab, setActiveTab] = useState('quick');
   }, [searchQuery, navigate]);
 
   // Handle Enter key press for quick search
- const handleQuickSearchKeyPress = async (e) => {
+  const handleQuickSearchKeyPress = async (e) => {
 
     if (e.key === "Enter" && searchQuery.trim() !== "") {
       try {
@@ -375,7 +375,7 @@ const [activeTab, setActiveTab] = useState('quick');
     if (!isFormValid) return;
 
     // Navigate with advanced search parameters
-    navigate("/result",{
+    navigate("/result", {
       state: {
         searchType: "advanced",
         // Location hierarchy
@@ -450,7 +450,7 @@ const [activeTab, setActiveTab] = useState('quick');
 
 
 
-  
+
 
   return (
     <div
@@ -462,7 +462,7 @@ const [activeTab, setActiveTab] = useState('quick');
         backgroundRepeat: "no-repeat",
       }}
       onClick={handleOutsideClick}
-       
+
     >
       {/* Main Content */}
       <div className="flex items-center justify-center p-4" >
@@ -470,31 +470,31 @@ const [activeTab, setActiveTab] = useState('quick');
           {/* Tab Navigation with Search Input */}
           <div className="flex justify-center -mb-8">
             <div className="bg-white rounded-sm shadow-sm md:w-full max-w-lg" data-aos="fade-down"
-                data-aos-offset="20"
-                data-aos-delay="20"
-                data-aos-duration="1000"
-                data-aos-easing="ease-in-out"
-                data-aos-mirror="true"
-                data-aos-once="false">
+              data-aos-offset="20"
+              data-aos-delay="20"
+              data-aos-duration="1000"
+              data-aos-easing="ease-in-out"
+              data-aos-mirror="true"
+              data-aos-once="false">
               <div className="flex flex-col sm:flex-row items-center justify-center p-4">
-              <QuickSearch
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                handleQuickSearchKeyPress={handleQuickSearchKeyPress}
-                onInputClick={() => setShowDropdown(true)}/>
+                <QuickSearch
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  handleQuickSearchKeyPress={handleQuickSearchKeyPress}
+                  onInputClick={() => setShowDropdown(true)} />
               </div>
             </div>
           </div>
 
           {/* Main Form Container */}
-         
+
           <div
             className="bg-white rounded-2xl shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-             {/* Fixed "or" tab styling */}
-             <div className="flex justify-center pt-16 pb-4">
-  {/* <div className="flex bg-gray-100 rounded-lg p-1 shadow-inner">
+            {/* Fixed "or" tab styling */}
+            <div className="flex justify-center pt-16 pb-4">
+              {/* <div className="flex bg-gray-100 rounded-lg p-1 shadow-inner">
     <button
       onClick={() => setActiveTab('quick')}
       className={`px-6 py-2 rounded-md font-medium md:text-lg font-inter1 transition-all duration-200 ${
@@ -516,152 +516,130 @@ const [activeTab, setActiveTab] = useState('quick');
      বড় প্যাকেজ
     </button>
   </div> */}
-</div>
+            </div>
             {/* Form Fields */}
 
-{activeTab === 'quick' ? (
-        <div className="space-y-4 flex py-6">
-          {/* Desktop/Tablet Layout */}
-          <div className="flex flex-wrap gap-4  text-sm text-gray-800 max-w-lg mx-auto justify-center">
-            <div className="flex items-center gap-3   min-w-0  ">
-              {/* <Check className="w-5 h-5 text-green-600 flex-shrink-0" /> */}
-              <span className="font-medium text-base lg:text-lg font-inter1">✅ JPG/PDF ফাইল</span>
-            </div>
-            
-            <div className="flex items-center gap-3  min-w-0 ">
-             {/* // <Check className="w-5 h-5 text-green-600 flex-shrink-0" /> */}
-              <span className="font-medium text-base lg:text-lg font-inter1">✅ প্রিন্ট রেডি ফাইল</span>
-            </div>
-            <div className="flex items-center gap-3  min-w-0 ">
-             {/* // <Check className="w-5 h-5 text-green-600 flex-shrink-0" /> */}
-              <span className="font-medium text-base lg:text-lg font-inter1">✅ হার্ড কপি</span>
-            </div>
-            {/* <div className="flex items-center gap-3 py-4 min-w-0 ">
-              <Check className="w-5 h-5 text-green-600 flex-shrink-0" />
-              <span className="font-medium">হেডার/footer</span>
-            </div> */}
-          </div>
+            {activeTab === 'quick' ? (
+              <div className="space-y-4 flex py-6">
+                {/* Desktop/Tablet Layout */}
+                <div className="flex flex-wrap gap-4  text-sm text-gray-800 max-w-lg mx-auto justify-center">
+                  <div className="flex items-center gap-3   min-w-0  ">
+                    {/* <Check className="w-5 h-5 text-green-600 flex-shrink-0" /> */}
+                    <span className="font-medium text-base lg:text-lg font-inter1">✅ JPG/PDF ফাইল</span>
+                  </div>
 
-          {/* Mobile Layout */}
-          {/* <div className="sm:hidden space-y-3 max-w-sm mx-auto">
-            <div className="flex items-center gap-3 p-4 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer border border-gray-200 hover:border-gray-300 text-sm text-gray-800">
-              <Check className="w-5 h-5 text-green-600" />
-              <span className="font-medium">JPG/PDF জেনারেট</span>
-            </div>
-            
-            <div className="flex items-center gap-3 p-4 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer border border-gray-200 hover:border-gray-300 text-sm text-gray-800">
-              <Check className="w-5 h-5 text-green-600" />
-              <span className="font-medium">ছবি ক্রপ করা</span>
-            </div>
-            
-            <div className="flex items-center gap-3 p-4 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer border border-gray-200 hover:border-gray-300 text-sm text-gray-800">
-              <Check className="w-5 h-5 text-green-600" />
-              <span className="font-medium">হেডার/footer</span>
-            </div>
-          </div> */}
-        </div>
-      ) : (
-        <div className="text-gray-600 text-center ">
-          <div className=" flex gap-6  text-sm text-gray-800 max-w-lg mx-auto justify-center">
-            <div className="flex items-center gap-3   min-w-0  ">
-              {/* <Check className="w-5 h-5 text-green-600 flex-shrink-0" /> */}
-              <span className="font-medium text-base lg:text-lg font-inter1">✅ JPG/PDF ফাইল</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-
-
-             {activeTab === 'quick' ? (
-            <div className="px-4 pb-8 lg:pb-17  sm:px-6">
-              
-              {/* Mobile View */}
-              {isMobile ? (
-                <MobileFormField
-                  selectedDivision={selectedDivision}
-                  handleDivisionChange={handleDivisionChange}
-                  divisions={divisions}
-                  filterOptions={filterOptions}
-                  loadingStates={loadingStates}
-                  mobileDropdowns={mobileDropdowns}
-                  toggleMobileDropdown={toggleMobileDropdown}
-                  handleDropdownSearchChange={handleDropdownSearchChange}
-  dropdownSearchQueries={dropdownSearchQueries}
-  khatianTypes={khatianTypes}
-  handleKhatianTypeChange={handleKhatianTypeChange}
-  selectedKhatianType={selectedKhatianType}
-  upazilas={upazilas}
-  handleUpazilaChange={handleUpazilaChange}
-  selectedUpazila={selectedUpazila}
-  districts={districts}
-  handleDistrictChange={handleDistrictChange}
-  selectedDistrict={selectedDistrict}
-/>
-
-              ) : (
-                /* Desktop View */
-              <DesktopFormFields 
-  selectedDivision={selectedDivision}
-  selectedDistrict={selectedDistrict}
-  selectedUpazila={selectedUpazila}
-  selectedKhatianType={selectedKhatianType}
-  divisions={divisions}
-  districts={districts}
-  upazilas={upazilas}
-  khatianTypes={khatianTypes}
-  showDropdown={showDropdown}
-  toggleDropdown={toggleDropdown}
-  dropdownSearchQueries={dropdownSearchQueries}
-  handleDropdownSearchChange={handleDropdownSearchChange}
-  handleDivisionChange={handleDivisionChange}
-  handleDistrictChange={handleDistrictChange}
-  handleUpazilaChange={handleUpazilaChange}
-  handleKhatianTypeChange={handleKhatianTypeChange}
-  loadingStates={loadingStates}
-/>
-
-              )}
-
-              {/* Error Messages */}
-              {(divisionsError ||
-                districtsError ||
-                upazilasError ||
-                khatianTypesError) && (
-                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="text-red-800 text-sm">
-                    ডেটা লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।
+                  <div className="flex items-center gap-3  min-w-0 ">
+                    {/* // <Check className="w-5 h-5 text-green-600 flex-shrink-0" /> */}
+                    <span className="font-medium text-base lg:text-lg font-inter1">✅ প্রিন্ট রেডি ফাইল</span>
+                  </div>
+                  <div className="flex items-center gap-3  min-w-0 ">
+                    {/* // <Check className="w-5 h-5 text-green-600 flex-shrink-0" /> */}
+                    <span className="font-medium text-base lg:text-lg font-inter1">✅ হার্ড কপি</span>
                   </div>
                 </div>
-              )}
-            </div>):(
-           
-                <BangladeshAdminForm  />
-              
-      
+              </div>
+            ) : (
+              <div className="text-gray-600 text-center ">
+                <div className=" flex gap-6  text-sm text-gray-800 max-w-lg mx-auto justify-center">
+                  <div className="flex items-center gap-3   min-w-0  ">
+                    {/* <Check className="w-5 h-5 text-green-600 flex-shrink-0" /> */}
+                    <span className="font-medium text-base lg:text-lg font-inter1">✅ JPG/PDF ফাইল</span>
+                  </div>
+                </div>
+              </div>
             )}
-            </div>
-            {activeTab === 'quick' &&  ( <div className="flex justify-center -mt-8" data-aos="fade-up"
-             data-aos-offset="20"
-                data-aos-delay="20"
-               data-aos-duration="1000"
-              data-aos-easing="ease-in-out"
-              data-aos-mirror="true"
-                data-aos-once="false">
-         <button
-         type="button"
-              
+
+
+
+
+            {activeTab === 'quick' ? (
+              <div className="px-4 pb-8 lg:pb-17  sm:px-6">
+
+                {/* Mobile View */}
+                {isMobile ? (
+                  <MobileFormField
+                    selectedDivision={selectedDivision}
+                    handleDivisionChange={handleDivisionChange}
+                    divisions={divisions}
+                    filterOptions={filterOptions}
+                    loadingStates={loadingStates}
+                    mobileDropdowns={mobileDropdowns}
+                    toggleMobileDropdown={toggleMobileDropdown}
+                    handleDropdownSearchChange={handleDropdownSearchChange}
+                    dropdownSearchQueries={dropdownSearchQueries}
+                    khatianTypes={khatianTypes}
+                    handleKhatianTypeChange={handleKhatianTypeChange}
+                    selectedKhatianType={selectedKhatianType}
+                    upazilas={upazilas}
+                    handleUpazilaChange={handleUpazilaChange}
+                    selectedUpazila={selectedUpazila}
+                    districts={districts}
+                    handleDistrictChange={handleDistrictChange}
+                    selectedDistrict={selectedDistrict}
+                  />
+
+                ) : (
+                  /* Desktop View */
+                  <DesktopFormFields
+                    selectedDivision={selectedDivision}
+                    selectedDistrict={selectedDistrict}
+                    selectedUpazila={selectedUpazila}
+                    selectedKhatianType={selectedKhatianType}
+                    divisions={divisions}
+                    districts={districts}
+                    upazilas={upazilas}
+                    khatianTypes={khatianTypes}
+                    showDropdown={showDropdown}
+                    toggleDropdown={toggleDropdown}
+                    dropdownSearchQueries={dropdownSearchQueries}
+                    handleDropdownSearchChange={handleDropdownSearchChange}
+                    handleDivisionChange={handleDivisionChange}
+                    handleDistrictChange={handleDistrictChange}
+                    handleUpazilaChange={handleUpazilaChange}
+                    handleKhatianTypeChange={handleKhatianTypeChange}
+                    loadingStates={loadingStates}
+                  />
+
+                )}
+
+                {/* Error Messages */}
+                {(divisionsError ||
+                  districtsError ||
+                  upazilasError ||
+                  khatianTypesError) && (
+                    <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="text-red-800 text-sm">
+                        ডেটা লোড করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।
+                      </div>
+                    </div>
+                  )}
+              </div>) : (
+
+              <BangladeshAdminForm />
+
+
+            )}
+          </div>
+          {activeTab === 'quick' && (<div className="flex justify-center -mt-8" data-aos="fade-up"
+            data-aos-offset="20"
+            data-aos-delay="20"
+            data-aos-duration="1000"
+            data-aos-easing="ease-in-out"
+            data-aos-mirror="true"
+            data-aos-once="false">
+            <button
+              type="button"
+
               onClick={() => {
                 // দ্রুত অনুসন্ধান এবং উন্নত অনুসন্ধান দুটোই handle করবে
                 if (searchQuery.trim()) {
-                  
+
                   handleQuickSearch(); // দ্রুত অনুসন্ধান
-                  
+
                 } else if (isFormValid) {
-                 
+
                   handleAdvancedSearch(); // উন্নত অনুসন্ধান
-                  
+
                 }
               }}
               disabled={
@@ -669,13 +647,12 @@ const [activeTab, setActiveTab] = useState('quick');
                 isQuickSearchLoading ||
                 loadingStates.overall
               }
-              className={`px-8 py-3 rounded-lg font-medium text-white transition-all duration-200 flex items-center space-x-2 ${
-                (isQuickSearchValid || isFormValid) &&
-                !isQuickSearchLoading &&
-                !loadingStates.overall
+              className={`px-8 py-3 rounded-lg font-medium text-white transition-all duration-200 flex items-center space-x-2 ${(isQuickSearchValid || isFormValid) &&
+                  !isQuickSearchLoading &&
+                  !loadingStates.overall
                   ? "bg-green-600 hover:bg-green-700  cursor-pointer"
                   : "bg-gray-400 cursor-not-allowed"
-              }`}
+                }`}
             >
               <Search className="h-5 w-5" />
               <span>

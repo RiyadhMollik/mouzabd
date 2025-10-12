@@ -169,220 +169,209 @@ export default function LoginPage() {
   };
 
   return (
-    
-      <div className="min-h-screen flex flex-col md:flex-row justify-center items-center bg-gradient-to-br from-gray-50 via-green-50 to-blue-50 p-4 md:p-0">
-        <div className="w-full md:w-1/2 flex justify-center items-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-300 hover:shadow-3xl">
-            <div className="text-center mb-8">
-              <div className="mx-auto h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-                <Lock className="h-6 w-6 text-green-600" />
+    <div className="min-h-screen flex flex-col md:flex-row justify-center items-center bg-gradient-to-br from-gray-50 via-green-50 to-blue-50 p-4 md:p-0">
+      <div className="w-full md:w-1/2 flex justify-center items-center p-4">
+        <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md transform transition-all duration-300 hover:shadow-3xl">
+          <div className="text-center mb-8">
+            <div className="mx-auto h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+              <Lock className="h-6 w-6 text-green-600" />
+            </div>
+            <h2 className="mt-4 text-2xl font-extrabold text-gray-900">
+              আপনার একাউন্টে লগইন করুন
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              লগইন করতে আপনার তথ্য দিন
+            </p>
+            {/* Show login message if redirected from package/order */}
+            {loginMessage && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-700">{loginMessage}</p>
               </div>
-              <h2 className="mt-4 text-2xl font-extrabold text-gray-900">
-                Sign in to your account
-              </h2>
-              <p className="mt-2 text-sm text-gray-600">
-                Enter your credentials to access your account
-              </p>
-              
-              {/* Show login message if redirected from package/order */}
-              {loginMessage && (
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-700">{loginMessage}</p>
+            )}
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email Field */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                ইমেইল
+              </label>
+              <div className="mt-1 relative rounded-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" />
                 </div>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className={`pl-10 focus:ring-green-500 focus:border-green-500 block w-full px-3 py-3 border rounded-lg shadow-sm text-gray-900 transition-all duration-200 ${
+                    errors.email ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="আপনার ইমেইল"
+                />
+              </div>
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
               )}
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Email Field */}
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email address
-                </label>
-                <div className="mt-1 relative rounded-md">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className={`pl-10 focus:ring-green-500 focus:border-green-500 block w-full px-3 py-3 border rounded-lg shadow-sm text-gray-900 transition-all duration-200 ${
-                      errors.email ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="you@example.com"
-                  />
+            {/* Password Field */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                পাসওয়ার্ড
+              </label>
+              <div className="mt-1 relative rounded-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" />
                 </div>
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-                )}
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className={`pl-10 pr-10 focus:ring-green-500 focus:border-green-500 block w-full px-3 py-3 border rounded-lg shadow-sm text-gray-900 transition-all duration-200 ${
+                    errors.password ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="••••••••"
+                />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-gray-400 hover:text-gray-500 focus:outline-none transition-colors duration-200"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+              )}
+            </div>
 
-              {/* Password Field */}
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Password
+            {/* Remember Me & Forgot Password - Fixed styling */}
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <input
+                  id="rememberMe"
+                  name="rememberMe"
+                  type="checkbox"
+                  checked={formData.rememberMe}
+                  onChange={handleInputChange}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded cursor-pointer"
+                />
+                <label 
+                  htmlFor="rememberMe" 
+                  className="text-sm text-gray-700 cursor-pointer select-none"
+                >
+                  মনে রাখুন
                 </label>
-                <div className="mt-1 relative rounded-md">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="current-password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className={`pl-10 pr-10 focus:ring-green-500 focus:border-green-500 block w-full px-3 py-3 border rounded-lg shadow-sm text-gray-900 transition-all duration-200 ${
-                      errors.password ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="••••••••"
-                  />
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="text-gray-400 hover:text-gray-500 focus:outline-none transition-colors duration-200"
+              </div>
+              <div>
+                <Link 
+                  to="/forget-password"
+                  className="text-sm font-medium text-green-600 hover:text-green-500 transition-colors duration-200"
+                >
+                  পাসওয়ার্ড ভুলে গেছেন?
+                </Link>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-green-600 to-indigo-600 hover:from-green-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-150 hover:scale-105"
+              >
+                {loading ? (
+                  <div className="flex items-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-5 w-5" />
-                      ) : (
-                        <Eye className="h-5 w-5" />
-                      )}
-                    </button>
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    লগইন হচ্ছে...
+                  </div>
+                ) : (
+                  "লগইন করুন"
+                )}
+              </button>
+            </div>
+          </form>
+
+          {/* Social Login */}
+          <div className="mt-8">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">অথবা Google দিয়ে লগইন করুন</span>
+              </div>
+            </div>
+            <div className="mt-6">
+              <div className="w-full flex justify-center">
+                <div className="w-full">
+                  <div className="flex flex-col items-center">
+                    <span className="mb-2 text-green-700 font-bold text-base animate-pulse">★ Google দিয়ে লগইন করুন ★</span>
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={handleGoogleError}
+                      theme="filled_blue"
+                      size="large"
+                      text="continue_with"
+                      shape="pill"
+                      logo_alignment="center"
+                      width="100%"
+                      useOneTap={false}
+                      auto_select={false}
+                    />
                   </div>
                 </div>
-                {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-                )}
               </div>
-
-              {/* Remember Me & Forgot Password - Fixed styling */}
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <input
-                    id="rememberMe"
-                    name="rememberMe"
-                    type="checkbox"
-                    checked={formData.rememberMe}
-                    onChange={handleInputChange}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded cursor-pointer"
-                  />
-                  <label 
-                    htmlFor="rememberMe" 
-                    className="text-sm text-gray-700 cursor-pointer select-none"
-                  >
-                    Remember me
-                  </label>
-                </div>
-                
-                <div>
-                  <Link 
-                    to="/forget-password"
-                    className="text-sm font-medium text-green-600 hover:text-green-500 transition-colors duration-200"
-                  >
-                    Forgot Password?
-                  </Link>
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-green-600 to-indigo-600 hover:from-green-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-150 hover:scale-105"
-                >
-                  {loading ? (
-                    <div className="flex items-center">
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Signing in...
-                    </div>
-                  ) : (
-                    "Sign in"
-                  )}
-                </button>
-              </div>
-            </form>
-
-            {/* Social Login */}
-            <div className="mt-8">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
-                </div>
-              </div>
-
-              {/* Social Login */}
-<div className="mt-8">
-  <div className="relative">
-    <div className="absolute inset-0 flex items-center">
-      <div className="w-full border-t border-gray-300"></div>
-    </div>
-   
-  </div>
-
-  <div className="mt-6">
-    <div className="w-full">
-      <GoogleLogin
-        onSuccess={handleGoogleSuccess}
-        onError={handleGoogleError}
-        theme="outline"
-        size="large"
-        text="continue_with"
-        shape="rectangular"
-        logo_alignment="center"
-        width="100%"
-        useOneTap={false}  // FIXED
-        auto_select={false}  // FIXED
-      />
-    </div>
-  </div>
-</div>
-
             </div>
+          </div>
 
-            {/* Sign Up Link */}
-            <div className="mt-8 text-center">
-              <p className="text-sm text-gray-600">
-                Don't have an account?{" "}
-                <button
-                  type="button"
-                  onClick={() => navigate('/register')}
-                  className="font-medium text-green-600 hover:text-green-500 focus:outline-none transition-colors duration-200"
-                >
-                  Sign up
-                </button>
-              </p>
-            </div>
+          {/* Sign Up Link */}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-600">
+              একাউন্ট নেই?{' '}
+              <button
+                type="button"
+                onClick={() => navigate('/register')}
+                className="font-medium text-green-600 hover:text-green-500 focus:outline-none transition-colors duration-200"
+              >
+                রেজিস্টার করুন
+              </button>
+            </p>
           </div>
         </div>
       </div>
-    
+    </div>
   );
 }

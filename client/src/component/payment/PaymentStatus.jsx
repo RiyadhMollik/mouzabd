@@ -289,49 +289,6 @@ const PaymentStatus = ({ merchantTransactionId, refreshInterval = null }) => {
             </div>
           )}
 
-          <div className="row mt-3">
-            <div className="col-md-4">
-              <div className={`text-center p-3 rounded ${transaction.is_verified ? 'bg-success' : 'bg-warning'} bg-opacity-10`}>
-                <i className={`fas fa-${transaction.is_verified ? 'shield-check' : 'shield-exclamation'} fa-2x ${transaction.is_verified ? 'text-success' : 'text-warning'} mb-2`}></i>
-                <br />
-                <span className={`badge bg-${transaction.is_verified ? 'success' : 'warning'}`}>
-                  {transaction.is_verified ? 'Verified' : 'Not Verified'}
-                </span>
-                {transaction.verification_attempts > 0 && (
-                  <small className="d-block text-muted mt-1">
-                    Attempts: {transaction.verification_attempts}
-                  </small>
-                )}
-              </div>
-            </div>
-            
-            <div className="col-md-4">
-              <div className={`text-center p-3 rounded ${transaction.is_successful ? 'bg-success' : 'bg-danger'} bg-opacity-10`}>
-                <i className={`fas fa-${transaction.is_successful ? 'check-circle' : 'times-circle'} fa-2x ${transaction.is_successful ? 'text-success' : 'text-danger'} mb-2`}></i>
-                <br />
-                <span className={`badge bg-${transaction.is_successful ? 'success' : 'danger'}`}>
-                  {transaction.is_successful ? 'Successful' : 'Not Successful'}
-                </span>
-              </div>
-            </div>
-            
-            <div className="col-md-4">
-              <div className={`text-center p-3 rounded ${transaction.can_be_refunded ? 'bg-info' : 'bg-secondary'} bg-opacity-10`}>
-                <i className={`fas fa-${transaction.can_be_refunded ? 'undo' : 'ban'} fa-2x ${transaction.can_be_refunded ? 'text-info' : 'text-secondary'} mb-2`}></i>
-                <br />
-                <span className={`badge bg-${transaction.can_be_refunded ? 'info' : 'secondary'}`}>
-                  {transaction.can_be_refunded ? 'Refundable' : 'Not Refundable'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {lastRefresh && (
-            <small className="text-muted d-block mt-3">
-              <i className="fas fa-clock me-1"></i>
-              Last updated: {lastRefresh.toLocaleString()}
-            </small>
-          )}
         </div>
       </div>
     </div>

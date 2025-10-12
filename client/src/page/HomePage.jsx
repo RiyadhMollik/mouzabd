@@ -38,7 +38,7 @@ const DownloadProcess = () => {
   {
     title: "ম্যাপ ডাউনলোড",
     icon: <FaMapMarkedAlt className="text-4xl text-red-500 mb-4 mx-auto" />,
-    desc: "মাই ম্যাপস অপশন থেকে সহজেই আপনার ফাইল ডাউনলোড করুন।"
+    desc: "আমার ক্রয়কৃত ম্যাপ অপশন থেকে সহজেই আপনার ফাইল ডাউনলোড করুন।"
   }
 ];
 

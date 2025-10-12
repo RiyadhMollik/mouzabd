@@ -257,6 +257,72 @@ const ResultPage = () => {
     return [];
   };
 
+  // Custom sorting function to group similar file names together
+  const sortFilesByName = (filesArray) => {
+    if (!filesArray || filesArray.length === 0) return filesArray;
+
+    return [...filesArray].sort((a, b) => {
+      const nameA = a.name || '';
+      const nameB = b.name || '';
+
+      // Extract the base name pattern (before the last number/variation)
+      // Example: "১_আটঘর_২_1_Atghar_2.jpg" -> extract "১_আটঘর" and "Atghar"
+      
+      // Try to extract the first part (Bengali number and name)
+      const getBengaliBase = (name) => {
+        const match = name.match(/^([০-৯]+_[^_]+)/);
+        return match ? match[1] : '';
+      };
+
+      // Try to extract the English name part
+      const getEnglishBase = (name) => {
+        const match = name.match(/[০-৯]+_([A-Za-z]+)_[০-৯]/);
+        return match ? match[1] : '';
+      };
+
+      // Extract numeric sequence from file name
+      const getNumericSequence = (name) => {
+        const match = name.match(/^([০-৯]+)/);
+        if (match) {
+          // Convert Bengali numerals to English for proper numeric sorting
+          const bengaliToEnglish = {
+            '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4',
+            '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9'
+          };
+          const bengaliNum = match[1];
+          const englishNum = bengaliNum.split('').map(c => bengaliToEnglish[c] || c).join('');
+          return parseInt(englishNum, 10);
+        }
+        return 0;
+      };
+
+      const bengaliBaseA = getBengaliBase(nameA);
+      const bengaliBaseB = getBengaliBase(nameB);
+      const englishBaseA = getEnglishBase(nameA);
+      const englishBaseB = getEnglishBase(nameB);
+      const numSeqA = getNumericSequence(nameA);
+      const numSeqB = getNumericSequence(nameB);
+
+      // First, sort by numeric sequence
+      if (numSeqA !== numSeqB) {
+        return numSeqA - numSeqB;
+      }
+
+      // Then, if Bengali base names match, group them together
+      if (bengaliBaseA && bengaliBaseB && bengaliBaseA === bengaliBaseB) {
+        return nameA.localeCompare(nameB, 'bn');
+      }
+
+      // If English base names match, group them together
+      if (englishBaseA && englishBaseB && englishBaseA === englishBaseB) {
+        return nameA.localeCompare(nameB);
+      }
+
+      // Default alphabetical sort
+      return nameA.localeCompare(nameB, 'bn');
+    });
+  };
+
   // Determine which files to use based on search type
   const files = useMemo(() => {
     if (isQuickSearch) {
@@ -265,10 +331,11 @@ const ResultPage = () => {
         locationState.quickSearchResults
       );
   
-      return transformGoogleDriveFiles(quickResults);
+      const transformedFiles = transformGoogleDriveFiles(quickResults);
+      return sortFilesByName(transformedFiles);
     } else {
       // Use area search results
-      return areaSearchFiles;
+      return sortFilesByName(areaSearchFiles);
     }
   }, [isQuickSearch, locationState.quickSearchResults, areaSearchFiles]);
 

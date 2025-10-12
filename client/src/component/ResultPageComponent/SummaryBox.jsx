@@ -3,22 +3,29 @@ import { convertNumberToBangla } from '../../utils/englishToBangla';
 
 const SummaryBox = ({totalPrice,selectedPackage,selectedFiles,handlePurchase}) => {
   console.log(selectedPackage)
-    return (
-        <>
-           <div className="fixed bottom-50 lg:bottom-80 right-4 left-auto border-t md:border border-gray-300 bg-white p-4 w-48 md:w-64 md:rounded-md shadow-lg z-20">
-          <div className="block">
-            <div className="flex-1 md:w-full">
-  <div className="border-b border-gray-200 pb-2 mb-2">
-  <div className="flex justify-between">
-    <span className="text-gray-700 text-sm">ফাইল সংখ্যা:</span>
-    <span
-      className="font-medium text-sm truncate ml-2"
-     
-    >
-      <span className="font-medium text-base">{convertNumberToBangla(selectedFiles.length || 0)}</span>
-    </span>
-  </div>
-</div>
+  // Helper to hide file extension
+  const getFileBaseName = (name) => name ? name.replace(/\.[^/.]+$/, '') : '';
+  return (
+    <>
+      <div className="fixed bottom-50 lg:bottom-80 right-4 left-auto border-t md:border border-gray-300 bg-white p-4 w-48 md:w-64 md:rounded-md shadow-lg z-20">
+        <div className="block">
+          <div className="flex-1 md:w-full">
+            <div className="border-b border-gray-200 pb-2 mb-2">
+              <div className="flex justify-between">
+                <span className="text-gray-700 text-sm">ফাইল সংখ্যা:</span>
+                <span className="font-medium text-sm truncate ml-2">
+                  <span className="font-medium text-base">{convertNumberToBangla(selectedFiles.length || 0)}</span>
+                </span>
+              </div>
+              {/* Show selected file names without extension */}
+              {selectedFiles.length > 0 && (
+                <div className="mt-2 text-xs text-gray-500">
+                  {selectedFiles.map((file, idx) => (
+                    <div key={idx} className="truncate">{getFileBaseName(file.name)}</div>
+                  ))}
+                </div>
+              )}
+            </div>
 
               <div className=" border-b border-gray-200 pb-2 mb-2">
                 <div className="flex justify-between">
