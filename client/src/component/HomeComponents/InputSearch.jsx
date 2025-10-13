@@ -36,24 +36,24 @@ const QuickSearch = ({
       // console.log('API Response:', data);
 
       const files = data?.files || data?.results || [];
-      
+
       // Filter to show only PDF and JPG/JPEG files
       const filteredFiles = Array.isArray(files) ? files.filter(file => {
         const fileName = file.name?.toLowerCase() || '';
         const mimeType = file.mimeType?.toLowerCase() || '';
-        
+
         // Check if it's a PDF
         const isPdf = fileName.endsWith('.pdf') || mimeType.includes('pdf');
-        
+
         // Check if it's a JPG/JPEG
-        const isJpg = fileName.endsWith('.jpg') || 
-                      fileName.endsWith('.jpeg') || 
-                      mimeType.includes('jpeg') || 
-                      mimeType.includes('jpg');
-        
+        const isJpg = fileName.endsWith('.jpg') ||
+          fileName.endsWith('.jpeg') ||
+          mimeType.includes('jpeg') ||
+          mimeType.includes('jpg');
+
         return isPdf || isJpg;
       }) : [];
-      
+
       setResults(filteredFiles);
       setShowDropdown(filteredFiles.length > 0);
       setSelectedIndex(-1);
@@ -79,7 +79,7 @@ const QuickSearch = ({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedIndex(prev => 
+        setSelectedIndex(prev =>
           prev < results.length - 1 ? prev + 1 : prev
         );
         break;
@@ -107,11 +107,20 @@ const QuickSearch = ({
     setSearchQuery(item.name);
     setShowDropdown(false);
     setSelectedIndex(-1);
-    
+
     // Redirect to checkout with the selected file
     handleDirectCheckout(item);
   };
-
+  const getFormattedPath = (fullPath) => {
+    if (!fullPath) return '';
+    // Remove the first segment (e.g., 'মৌজা ম্যাপ ফাইল/')
+    const parts = fullPath.split('/').filter(Boolean);
+    // Return last 4 segments (division/district/upazila/surveyType)
+    if (parts.length >= 5) {
+      return parts.slice(1, -1).join('/');
+    }
+    return parts.slice(1).join('/');
+  };
   const calculatePackageForFile = async (fileCount) => {
     try {
       const token = await packageApi();
@@ -218,9 +227,9 @@ const QuickSearch = ({
     console.log('📦 Direct checkout data:', checkoutData);
 
     // Navigate to checkout page
-    navigate('/checkout', { 
+    navigate('/checkout', {
       state: checkoutData,
-      replace: false 
+      replace: false
     });
   };
 
@@ -274,7 +283,7 @@ const QuickSearch = ({
     <div className="relative w-full max-w-lg mx-auto " >
       {/* Search Input */}
       <div className="relative">
-        
+
         <input
           type="text"
           value={searchQuery}
@@ -313,11 +322,10 @@ const QuickSearch = ({
                     e.preventDefault(); // Prevent blur event
                     handleSelect(item);
                   }}
-                  className={`px-4 py-3 cursor-pointer transition-all duration-150 border-b border-gray-50 last:border-b-0 ${
-                    selectedIndex === index
+                  className={`px-4 py-3 cursor-pointer transition-all duration-150 border-b border-gray-50 last:border-b-0 ${selectedIndex === index
                       ? 'bg-green-50 border-l-4 border-l-green-500'
                       : 'hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center space-x-3">
                     {/* File Icon */}
@@ -341,6 +349,7 @@ const QuickSearch = ({
                           <span>{new Date(item.modified).toLocaleDateString('bn-BD')}</span>
                         </div>
                       )}
+                      <span className="font-medium">{getFormattedPath(item.fullPath)}</span>
                       {/* Checkout indicator */}
                       <div className="text-xs text-green-600 mt-1 font-medium">
                         ক্লিক করুন চেকআউট করতে →

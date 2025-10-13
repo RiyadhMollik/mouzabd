@@ -21,7 +21,7 @@ const HomeCard = () => {
       } else if (width < 1224) {
         setSlidesToShow(2);
       } else {
-        setSlidesToShow(3);
+        setSlidesToShow(2);
       }
     };
 

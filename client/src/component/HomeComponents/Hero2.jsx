@@ -205,7 +205,6 @@ export default function Heros() {
 
   // Handle Enter key press for quick search
   const handleQuickSearchKeyPress = async (e) => {
-
     if (e.key === "Enter" && searchQuery.trim() !== "") {
       try {
         const response = await fetch(`${getBaseUrl}/api/drive/search-file/?filename=${encodeURIComponent(searchQuery)}`);
@@ -215,6 +214,18 @@ export default function Heros() {
         console.error("Search error:", error);
       }
     }
+  };
+
+  // Helper to extract formatted path from fullPath
+  const getFormattedPath = (fullPath) => {
+    if (!fullPath) return '';
+    // Remove the first segment (e.g., 'মৌজা ম্যাপ ফাইল/')
+    const parts = fullPath.split('/').filter(Boolean);
+    // Return last 4 segments (division/district/upazila/surveyType)
+    if (parts.length >= 5) {
+      return parts.slice(1, -1).join('/');
+    }
+    return parts.slice(1).join('/');
   };
 
   // Optimized selection handlers with prefetching
@@ -485,6 +496,22 @@ export default function Heros() {
               </div>
             </div>
           </div>
+
+          {/* Search Results View */}
+          {results && results.length > 0 && (
+            <div className="mt-6 flex flex-col items-center">
+              <div className="w-full max-w-lg bg-white rounded shadow p-4">
+                <h3 className="text-lg font-semibold mb-2 text-gray-700">অনুসন্ধান ফলাফল</h3>
+                <ul className="divide-y divide-gray-200">
+                  {results.map((item, idx) => (
+                    <li key={item.id || idx} className="py-2 text-gray-800">
+                      <span className="font-medium">{getFormattedPath(item.fullPath)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
 
           {/* Main Form Container */}
 
