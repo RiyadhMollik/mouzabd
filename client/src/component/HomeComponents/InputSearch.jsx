@@ -6,6 +6,7 @@ import { getBaseUrl } from '../../utils/baseurls';
 import { requireAuth } from '../../utils/authUtils';
 import { packageApi } from '../../utils/api/CommonApi';
 import { decodeToken } from '../../utils/TokenDecoder';
+import { calculateSurveyPrice, getSurveyTypeFromPath } from '../../utils/api/SurveyPricingApi';
 
 const QuickSearch = ({
   searchQuery,
@@ -18,6 +19,8 @@ const QuickSearch = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [priceCache, setPriceCache] = useState({}); // Cache prices for displayed files
+  const [priceLoading, setPriceLoading] = useState({}); // Track loading state for each file
 
   // Debounced API fetch
   const fetchResults = _.debounce(async (query) => {
@@ -57,6 +60,35 @@ const QuickSearch = ({
       setResults(filteredFiles);
       setShowDropdown(filteredFiles.length > 0);
       setSelectedIndex(-1);
+
+      // Calculate prices for filtered files (in background)
+      filteredFiles.forEach(async (file) => {
+        if (!priceCache[file.id]) {
+          // Set loading state for this file
+          setPriceLoading(prev => ({ ...prev, [file.id]: true }));
+          
+          try {
+            const { totalPrice, selectedPackage } = await calculatePackageForFile(1, file);
+            setPriceCache(prev => ({
+              ...prev,
+              [file.id]: {
+                price: totalPrice,
+                packageName: selectedPackage?.field_name,
+                isSurvey: selectedPackage?.is_survey_pricing
+              }
+            }));
+          } catch (error) {
+            console.error('Error calculating price for file:', file.id, error);
+          } finally {
+            // Remove loading state for this file
+            setPriceLoading(prev => {
+              const newState = { ...prev };
+              delete newState[file.id];
+              return newState;
+            });
+          }
+        }
+      });
     } catch (error) {
       console.error('Search error:', error);
       setResults([]);
@@ -121,8 +153,39 @@ const QuickSearch = ({
     }
     return parts.slice(1).join('/');
   };
-  const calculatePackageForFile = async (fileCount) => {
+  const calculatePackageForFile = async (fileCount, file = null) => {
     try {
+      console.log('💰 Calculating price for file:', { fileCount, file });
+
+      // Priority 1: Try survey-based pricing if file has path information
+      if (file && file.fullPath) {
+        try {
+          const surveyType = getSurveyTypeFromPath(file.fullPath);
+          console.log('🏷️ Detected survey type:', surveyType, 'from path:', file.fullPath);
+
+          const surveyPricing = await calculateSurveyPrice(surveyType, fileCount);
+          
+          if (surveyPricing && surveyPricing.success) {
+            console.log('✅ Using survey-based pricing:', surveyPricing.pricing);
+            
+            return {
+              totalPrice: surveyPricing.pricing.total_price,
+              selectedPackage: {
+                field_name: surveyPricing.pricing.display_name || `${surveyType} সার্ভে`,
+                price_per_file: surveyPricing.pricing.price_per_file,
+                file_limit: 999999,
+                survey_type: surveyType,
+                is_survey_pricing: true,
+              }
+            };
+          }
+        } catch (surveyError) {
+          console.warn('⚠️ Survey pricing not available, falling back to package pricing:', surveyError);
+        }
+      }
+
+      // Priority 2: Fallback to package-based pricing
+      console.log('📦 Using package-based pricing');
       const token = await packageApi();
       if (!token) {
         console.log('Could not retrieve package token');
@@ -206,19 +269,29 @@ const QuickSearch = ({
       return;
     }
 
-    // Calculate package info for 1 file
-    const { totalPrice, selectedPackage } = await calculatePackageForFile(1);
+    console.log('🛒 Starting direct checkout for file:', file);
+
+    // Calculate package info for 1 file (pass the file for survey pricing detection)
+    const { totalPrice, selectedPackage } = await calculatePackageForFile(1, file);
+
+    console.log('💳 Calculated pricing:', {
+      totalPrice,
+      packageName: selectedPackage?.field_name,
+      isSurveyPricing: selectedPackage?.is_survey_pricing
+    });
 
     // Prepare checkout data for single file
     const checkoutData = {
       selectedFiles: [file],
       selectedFileIds: [file.id],
-      packageInfo: selectedPackage, // Now includes calculated package
+      packageInfo: selectedPackage, // Now includes calculated package (survey or regular)
       totalAmount: totalPrice, // Now includes calculated price
       fileCount: 1,
       searchInfo: {
         searchType: 'quick',
-        quickSearchQuery: file.name
+        quickSearchQuery: file.name,
+        surveyType: selectedPackage?.survey_type || null,
+        fullPath: file.fullPath
       },
       timestamp: new Date().toISOString(),
       directCheckout: true // Flag to indicate this is a direct checkout from search
@@ -349,7 +422,31 @@ const QuickSearch = ({
                           <span>{new Date(item.modified).toLocaleDateString('bn-BD')}</span>
                         </div>
                       )}
-                      <span className="font-medium">{getFormattedPath(item.fullPath)}</span>
+                      <span className="text-xs text-gray-600 font-medium">{getFormattedPath(item.fullPath)}</span>
+                      
+                      {/* Price Display */}
+                      {priceLoading[item.id] ? (
+                        // Loading state for price
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full inline-flex items-center space-x-1">
+                            <div className="animate-spin rounded-full h-3 w-3 border-2 border-gray-400 border-t-transparent"></div>
+                            <span>মূল্য গণনা করা হচ্ছে...</span>
+                          </span>
+                        </div>
+                      ) : priceCache[item.id] ? (
+                        // Price loaded
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">
+                            মূল্য: {priceCache[item.id].price} ৳
+                          </span>
+                          {priceCache[item.id].isSurvey && (
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                              {priceCache[item.id].packageName}
+                            </span>
+                          )}
+                        </div>
+                      ) : null}
+                      
                       {/* Checkout indicator */}
                       <div className="text-xs text-green-600 mt-1 font-medium">
                         ক্লিক করুন চেকআউট করতে →

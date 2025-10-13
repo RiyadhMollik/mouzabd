@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFiles } from "../utils/api/AdvancedSearch";
+import { calculateSurveyPrice, extractSurveyType } from "../utils/api/SurveyPricingApi";
 
 import { X, FileText, File, Download, ExternalLink, Image, FileSpreadsheet, Presentation, Eye } from "lucide-react";
 import ValidSearch from "../component/ResultPageComponent/ValidSearch";
@@ -207,7 +208,6 @@ const ResultPage = () => {
         selectedUpazila,
         selectedKhatianType
       );
-
       return transformGoogleDriveFiles(result);
     },
     enabled:
@@ -257,7 +257,7 @@ const ResultPage = () => {
     return [];
   };
 
-  // Custom sorting function to group similar file names together
+  // Custom sorting function to sort by main serial (first number) then sub serial (last number)
   const sortFilesByName = (filesArray) => {
     if (!filesArray || filesArray.length === 0) return filesArray;
 
@@ -265,60 +265,73 @@ const ResultPage = () => {
       const nameA = a.name || '';
       const nameB = b.name || '';
 
-      // Extract the base name pattern (before the last number/variation)
-      // Example: "১_আটঘর_২_1_Atghar_2.jpg" -> extract "১_আটঘর" and "Atghar"
+      // Helper to convert Bengali numerals to English
+      const bengaliToEnglish = {
+        '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4',
+        '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9'
+      };
+
+      const convertBengaliToEnglish = (str) => {
+        return str.split('').map(c => bengaliToEnglish[c] || c).join('');
+      };
+
+      // Extract main serial (first number) and sub serial (last number before extension)
+      // Pattern: "১_আটঘর_২_1_Atghar_2.jpg" 
+      // Main serial: 1 (first number)
+      // Sub serial: 2 (last number before .jpg)
       
-      // Try to extract the first part (Bengali number and name)
-      const getBengaliBase = (name) => {
-        const match = name.match(/^([০-৯]+_[^_]+)/);
-        return match ? match[1] : '';
-      };
-
-      // Try to extract the English name part
-      const getEnglishBase = (name) => {
-        const match = name.match(/[০-৯]+_([A-Za-z]+)_[০-৯]/);
-        return match ? match[1] : '';
-      };
-
-      // Extract numeric sequence from file name
-      const getNumericSequence = (name) => {
-        const match = name.match(/^([০-৯]+)/);
-        if (match) {
-          // Convert Bengali numerals to English for proper numeric sorting
-          const bengaliToEnglish = {
-            '০': '0', '১': '1', '২': '2', '৩': '3', '৪': '4',
-            '৫': '5', '৬': '6', '৭': '7', '৮': '8', '৯': '9'
-          };
-          const bengaliNum = match[1];
-          const englishNum = bengaliNum.split('').map(c => bengaliToEnglish[c] || c).join('');
-          return parseInt(englishNum, 10);
+      const getSerials = (name) => {
+        // Remove file extension
+        const nameWithoutExt = name.replace(/\.[^.]+$/, '');
+        
+        // Find first number (main serial) - could be Bengali or English
+        const firstNumMatch = nameWithoutExt.match(/^([০-৯]+|[0-9]+)/);
+        let mainSerial = 0;
+        
+        if (firstNumMatch) {
+          const numStr = firstNumMatch[1];
+          // Check if it's Bengali number
+          if (/[০-৯]/.test(numStr)) {
+            const englishNum = convertBengaliToEnglish(numStr);
+            mainSerial = parseInt(englishNum, 10);
+          } else {
+            mainSerial = parseInt(numStr, 10);
+          }
         }
-        return 0;
+        
+        // Find last number (sub serial) - look for number at the end or before extension
+        // Pattern could be: _2.jpg or _২.jpg
+        const lastNumMatch = nameWithoutExt.match(/[_\s]([০-৯]+|[0-9]+)$/);
+        let subSerial = 0;
+        
+        if (lastNumMatch) {
+          const numStr = lastNumMatch[1];
+          // Check if it's Bengali number
+          if (/[০-৯]/.test(numStr)) {
+            const englishNum = convertBengaliToEnglish(numStr);
+            subSerial = parseInt(englishNum, 10);
+          } else {
+            subSerial = parseInt(numStr, 10);
+          }
+        }
+        
+        return { mainSerial, subSerial };
       };
 
-      const bengaliBaseA = getBengaliBase(nameA);
-      const bengaliBaseB = getBengaliBase(nameB);
-      const englishBaseA = getEnglishBase(nameA);
-      const englishBaseB = getEnglishBase(nameB);
-      const numSeqA = getNumericSequence(nameA);
-      const numSeqB = getNumericSequence(nameB);
+      const serialsA = getSerials(nameA);
+      const serialsB = getSerials(nameB);
 
-      // First, sort by numeric sequence
-      if (numSeqA !== numSeqB) {
-        return numSeqA - numSeqB;
+      // First, sort by main serial (first number)
+      if (serialsA.mainSerial !== serialsB.mainSerial) {
+        return serialsA.mainSerial - serialsB.mainSerial;
       }
 
-      // Then, if Bengali base names match, group them together
-      if (bengaliBaseA && bengaliBaseB && bengaliBaseA === bengaliBaseB) {
-        return nameA.localeCompare(nameB, 'bn');
+      // If main serials are equal, sort by sub serial (last number)
+      if (serialsA.subSerial !== serialsB.subSerial) {
+        return serialsA.subSerial - serialsB.subSerial;
       }
 
-      // If English base names match, group them together
-      if (englishBaseA && englishBaseB && englishBaseA === englishBaseB) {
-        return nameA.localeCompare(nameB);
-      }
-
-      // Default alphabetical sort
+      // If both serials are equal, do alphabetical sort
       return nameA.localeCompare(nameB, 'bn');
     });
   };
@@ -446,8 +459,73 @@ const usePackageData = () => {
     enabled: true, // ✅ স্পষ্টভাবে enabled করুন
   });
 };
+
+// Survey-based pricing calculation
+const useSurveyPricing = (selectedFileCount, khatianType) => {
+  return useQuery({
+    queryKey: ['surveyPricing', khatianType, selectedFileCount],
+    queryFn: async () => {
+      if (selectedFileCount === 0) {
+        return { totalPrice: 0, pricePerFile: 0 };
+      }
+
+      try {
+        const surveyType = extractSurveyType(khatianType);
+        console.log('🏷️ Survey type extracted:', surveyType, 'from khatian:', khatianType);
+        
+        const response = await calculateSurveyPrice(surveyType, selectedFileCount);
+        console.log('💵 Survey price response:', response);
+        
+        if (response.success && response.pricing) {
+          return {
+            totalPrice: response.pricing.total_price,
+            pricePerFile: response.pricing.price_per_file,
+            surveyType: response.pricing.survey_type,
+            displayName: response.pricing.display_name,
+          };
+        }
+        
+        // Fallback to default pricing
+        console.warn('⚠️ Survey pricing response invalid, using fallback');
+        return { totalPrice: 0, pricePerFile: 0 };
+      } catch (error) {
+        console.error('❌ Survey pricing error:', error);
+        // Return fallback instead of throwing to allow package pricing to work
+        return { totalPrice: 0, pricePerFile: 0 };
+      }
+    },
+    enabled: selectedFileCount > 0 && Boolean(khatianType),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1, // Only retry once to fail fast
+    retryDelay: 1000,
+  });
+};
           
 const { data: packageData, isLoading: isPackageLoading, error: packageError } = usePackageData();
+
+// Get survey pricing based on khatian type
+const { 
+  data: surveyPricing, 
+  isLoading: isSurveyPricingLoading,
+  error: surveyPricingError
+} = useSurveyPricing(
+  selectedFiles.length, 
+  locationState.selectedKhatianType || areaInfo.selectedKhatianType
+);
+
+// Debug logging for survey pricing
+useEffect(() => {
+  console.log('🔍 Survey Pricing Debug:', {
+    surveyPricing,
+    isSurveyPricingLoading,
+    surveyPricingError,
+    selectedFilesCount: selectedFiles.length,
+    khatianType: locationState.selectedKhatianType || areaInfo.selectedKhatianType
+  });
+}, [surveyPricing, isSurveyPricingLoading, surveyPricingError, selectedFiles.length]);
+
 useEffect(() => {
   console.log('Package data changed:', packageData);
   console.log('Package loading:', isPackageLoading);
@@ -455,10 +533,40 @@ useEffect(() => {
 }, [packageData, isPackageLoading, packageError]);
 
 const { totalPrice, selectedPackage } = useMemo(() => {
-  console.log('Calculating package...', { packageData, selectedFilesCount: selectedFiles.length });
+  console.log('💰 Calculating price...', { 
+    surveyPricing, 
+    isSurveyPricingLoading,
+    packageData, 
+    selectedFilesCount: selectedFiles.length,
+    khatianType: areaInfo.selectedKhatianType
+  });
 
+  // Wait for survey pricing to load if files are selected
+  if (selectedFiles.length > 0 && isSurveyPricingLoading) {
+    console.log('⏳ Waiting for survey pricing...');
+    return { totalPrice: 0, selectedPackage: null };
+  }
+
+  // Priority 1: Use survey-based pricing if available
+  if (surveyPricing && surveyPricing.totalPrice > 0 && selectedFiles.length > 0) {
+    console.log('✅ Using survey-based pricing:', surveyPricing);
+    return {
+      totalPrice: Math.ceil(surveyPricing.totalPrice),
+      selectedPackage: {
+        name: surveyPricing.displayName || 'Survey Based Pricing',
+        price_per_file: surveyPricing.pricePerFile,
+        file_limit: selectedFiles.length,
+        package_type: 'survey',
+        survey_type: surveyPricing.surveyType
+      }
+    };
+  }
+
+  console.log('⚠️ Survey pricing not available, using package pricing');
+
+  // Priority 2: Use package-based pricing as fallback
   if (!packageData || isPackageLoading) {
-    console.log('Package data not available yet');
+    console.log('📦 Package data not available yet');
     return { totalPrice: 0, selectedPackage: null };
   }
 
@@ -540,9 +648,9 @@ const { totalPrice, selectedPackage } = useMemo(() => {
   };
   console.log('Selected package (last):', result);
   return result;
-}, [packageData, selectedFiles.length, isPackageLoading]); // 👈 updated dependencies
+}, [surveyPricing, isSurveyPricingLoading, packageData, selectedFiles.length, isPackageLoading, areaInfo.selectedKhatianType]);
 
-console.log(selectedPackage)
+console.log('💳 Final Price:', { totalPrice, selectedPackage });
 
   // Handle retry
   const handleRetry = () => {

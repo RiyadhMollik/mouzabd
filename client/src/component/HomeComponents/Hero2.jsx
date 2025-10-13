@@ -559,10 +559,6 @@ export default function Heros() {
                     {/* // <Check className="w-5 h-5 text-green-600 flex-shrink-0" /> */}
                     <span className="font-medium text-base lg:text-lg font-inter1">✅ প্রিন্ট রেডি ফাইল</span>
                   </div>
-                  <div className="flex items-center gap-3  min-w-0 ">
-                    {/* // <Check className="w-5 h-5 text-green-600 flex-shrink-0" /> */}
-                    <span className="font-medium text-base lg:text-lg font-inter1">✅ হার্ড কপি</span>
-                  </div>
                 </div>
               </div>
             ) : (

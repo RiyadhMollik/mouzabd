@@ -7,6 +7,7 @@ import TopBar from "./component/shared/TopBar";
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import FeeNotice from "./component/HomeComponents/FeeNotice";
+import ScrollToTop from "./component/shared/ScrollToTop";
 
 function App() {
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -44,6 +45,9 @@ function App() {
 
   return (
     <div>
+      {/* Scroll to top on route change */}
+      <ScrollToTop />
+      
       <header className="sticky top-0 w-full z-50 bg-white shadow-md">
         <TopBar />
         <Navbar />
