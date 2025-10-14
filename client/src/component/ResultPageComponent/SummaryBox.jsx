@@ -27,7 +27,7 @@ const SummaryBox = ({totalPrice,selectedPackage,selectedFiles,handlePurchase}) =
               )}
             </div>
 
-              <div className=" border-b border-gray-200 pb-2 mb-2">
+              {/* <div className=" border-b border-gray-200 pb-2 mb-2">
                 <div className="flex justify-between">
                   <span className="text-gray-700 text-sm">প্যাকেজ:</span>
                   <span
@@ -41,7 +41,7 @@ const SummaryBox = ({totalPrice,selectedPackage,selectedFiles,handlePurchase}) =
                     
                   </span>
                 </div>
-              </div>
+              </div> */}
               <div className="flex justify-between border-b border-gray-200 pb-2 mb-2">
                 <span className="text-gray-700 text-sm">মূল্য:</span>
                 {

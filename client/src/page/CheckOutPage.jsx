@@ -604,9 +604,9 @@ const handleSubmit = async () => {
       );
     }
 
-    if (!packageInfo?.id && !packageInfo?.package_id && !packageInfo?.pk) {
-      throw new Error('Package information is missing');
-    }
+    // if (!packageInfo?.id && !packageInfo?.package_id && !packageInfo?.pk) {
+    //   throw new Error('Package information is missing');
+    // }
 
     // For free orders, we don't need to validate total amount
     if (!isFreeOrder && (!prices.finalTotal || prices.finalTotal <= 0)) {

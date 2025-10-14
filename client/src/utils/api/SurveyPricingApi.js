@@ -79,15 +79,25 @@ export const extractSurveyType = (khatianType) => {
 
   const normalized = khatianType.toUpperCase().trim();
   
-  // Check for exact matches
+  // Check for exact matches (order matters - check longer strings first)
   if (normalized === 'SA_RS' || normalized === 'SA/RS') return 'SA_RS';
+  if (normalized === 'RS_BS' || normalized === 'RS/BS') return 'RS_BS';
+  if (normalized === 'BS_RS' || normalized === 'BS/RS') return 'BS_RS';
+  if (normalized === 'CS_SA' || normalized === 'CS/SA') return 'CS_SA';
+  if (normalized === 'SA_CS' || normalized === 'SA/CS') return 'SA_CS';
+  if (normalized === 'DIYARA' || normalized === 'দিয়ারা') return 'DIYARA';
   if (normalized === 'CS') return 'CS';
   if (normalized === 'BS') return 'BS';
   if (normalized === 'SA') return 'SA';
   if (normalized === 'RS') return 'RS';
 
-  // Check if contains
+  // Check if contains (check combinations first)
+  if (normalized.includes('RS') && normalized.includes('BS')) return 'RS_BS';
+  if (normalized.includes('BS') && normalized.includes('RS')) return 'BS_RS';
+  if (normalized.includes('CS') && normalized.includes('SA')) return 'CS_SA';
+  if (normalized.includes('SA') && normalized.includes('CS')) return 'SA_CS';
   if (normalized.includes('SA') && normalized.includes('RS')) return 'SA_RS';
+  if (normalized.includes('DIYARA') || normalized.includes('দিয়ারা')) return 'DIYARA';
   if (normalized.includes('CS')) return 'CS';
   if (normalized.includes('BS')) return 'BS';
   if (normalized.includes('SA')) return 'SA';
