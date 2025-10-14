@@ -20,8 +20,25 @@ export default function LoginPage() {
   const { logIn, loading } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || location.state?.returnUrl || "/";
+  
+  // Get the return path - support multiple formats
+  const from = location.state?.from?.pathname || 
+               location.state?.returnUrl || 
+               location.state?.from || 
+               "/";
   const loginMessage = location.state?.message;
+
+  // Log for debugging
+  React.useEffect(() => {
+    if (location.state) {
+      console.log('📍 Login page - Redirect info:', {
+        from: location.state.from,
+        returnUrl: location.state.returnUrl,
+        message: location.state.message,
+        finalRedirect: from
+      });
+    }
+  }, [location.state, from]);
 
   // Handle input changes
   const handleInputChange = (e) => {

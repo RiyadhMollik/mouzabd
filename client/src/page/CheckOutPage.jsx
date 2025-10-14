@@ -15,6 +15,12 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import translate from 'translate-google-api';
 import packageService from '../services/PackageService';
+import {
+  trackBeginCheckout,
+  trackAddPaymentInfo,
+  trackPurchase,
+  trackViewCart,
+} from '../utils/gtmTracking';
 
 
 const extrafeaturesData = () => {
@@ -190,6 +196,22 @@ const CheckoutPage = () => {
 
     checkFreeOrderEligibility();
   }, [userdata, fileCount, checkoutData.isFreeOrder, checkoutData.validationResult]);
+
+  // GTM: Track begin_checkout when page loads
+  useEffect(() => {
+    if (selectedFiles && selectedFiles.length > 0 && packageInfo && totalAmount) {
+      console.log('📊 GTM: Tracking begin_checkout');
+      trackBeginCheckout(
+        selectedFiles,
+        packageInfo,
+        totalAmount,
+        null // coupon if available
+      );
+      
+      // Also track view_cart
+      trackViewCart(selectedFiles, packageInfo, totalAmount);
+    }
+  }, []); // Run once on mount
 
   const getSortedExtraFeatures = () => {
     if (!extraFeatures?.data) return [];
@@ -714,6 +736,21 @@ const handleSubmit = async () => {
         console.log('📝 Free order API response:', freeOrderResponse);
         
         if (freeOrderResponse.success) {
+          // 📊 GTM: Track free order as purchase with 0 value
+          console.log('📊 GTM: Tracking free order purchase');
+          const transactionId = freeOrderResponse.order_id || freeOrderResponse.id || `FREE_ORDER_${Date.now()}`;
+          trackPurchase(
+            transactionId,
+            selectedFiles,
+            packageInfo,
+            0, // Free order - 0 amount
+            {
+              paymentMethod: 'free',
+              customerType: userdata ? 'returning' : 'new',
+              coupon: 'FREE_DAILY_LIMIT',
+            }
+          );
+          
           // Handle successful free order
           toast.success('অর্ডার সফল হয়েছে! বিনামূল্যে প্রক্রিয়া করা হয়েছে।', {
             position: "top-right",
@@ -743,7 +780,16 @@ const handleSubmit = async () => {
 
     const response = await processPurchase(purchaseData);
 
-    // 👉 Auto login
+    // � GTM: Track add_payment_info
+    console.log('📊 GTM: Tracking add_payment_info');
+    trackAddPaymentInfo(
+      selectedFiles,
+      packageInfo,
+      parseFloat(prices.finalTotal.toFixed(2)),
+      formData.paymentMethod || 'bkash'
+    );
+
+    // �👉 Auto login
     if (!isUserAuthenticated && formData.email && formData.password) {
       console.log('👤 Attempting auto-login after purchase...');
       setIsLoggingIn(true);
@@ -798,6 +844,21 @@ const handleSubmit = async () => {
     } else if (response.success || response.status === 'success') {
       // Check if this is a free order (from isFreeOrder flag or zero amount)
       const orderIsFree = isFreeOrder || checkoutData?.isFreeOrder || parseFloat(prices.finalTotal) === 0;
+      
+      // 📊 GTM: Track successful purchase
+      console.log('📊 GTM: Tracking purchase');
+      const transactionId = response.order_id || response.id || response.purchase_id || `ORDER_${Date.now()}`;
+      trackPurchase(
+        transactionId,
+        selectedFiles,
+        packageInfo,
+        parseFloat(prices.finalTotal.toFixed(2)),
+        {
+          paymentMethod: formData.paymentMethod || 'bkash',
+          customerType: userdata ? 'returning' : 'new',
+          coupon: null, // Add coupon if you have one
+        }
+      );
       
       if (orderIsFree) {
         console.log('✅ Free order completed successfully, redirecting to map list');

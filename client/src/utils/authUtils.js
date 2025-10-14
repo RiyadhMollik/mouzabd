@@ -31,9 +31,11 @@ export const isAuthenticated = () => {
 export const redirectToLogin = (navigate, returnUrl = '/', message = 'লগইন করুন') => {
   navigate('/login', {
     state: {
-      returnUrl: returnUrl,
+      from: { pathname: returnUrl }, // Changed to match LoginPage expectation
+      returnUrl: returnUrl, // Keep for backward compatibility
       message: message
-    }
+    },
+    replace: false
   });
 };
 
