@@ -90,7 +90,7 @@ children: [
         },
         {
           path: '/map/list',
-          element: <PrivateRoute><MapList/></PrivateRoute>,
+          element: <MapList/>,
         },
         { 
           path: '/শর্তাবলী',
@@ -110,7 +110,7 @@ children: [
         },
         {
           path: "/success",
-          element:<PrivateRoute><SuccessPage/></PrivateRoute>
+          element:<SuccessPage/>
 
         },
         { 

@@ -670,10 +670,8 @@ const handlePurchase = async () => {
     return;
   }
 
-  // Check authentication and redirect if needed
-  if (!requireAuth(navigate, 'order', location.pathname + location.search)) {
-    return;
-  }
+  // ✅ Removed authentication check - users can login on checkout page if needed
+  // This allows guests to reach checkout page and see pricing/details before logging in
 
   // Get selected file details
   const selectedFileDetails = files.filter(file => selectedFiles.includes(file.id));

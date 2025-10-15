@@ -6,15 +6,10 @@ import { router } from "./router/router.jsx";
 import { RouterProvider } from "react-router-dom";
 import AuthProvider from "./provider/AuthProvider.jsx";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import disableDevTools from "./utils/disableDevTools.js";
-// import { queryClient } from './utils/queryClient.js';
+import { initDataLayer } from "./utils/gtmTracking";
 
-// Disable DevTools - Now enabled for testing
-// if (import.meta.env.MODE === 'production') {
-  disableDevTools();
-// }
-
-// Initialize QueryClient
+// Initialize GTM Data Layer
+initDataLayer();
 
 const queryClient = new QueryClient({
   defaultOptions: {
