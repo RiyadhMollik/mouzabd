@@ -169,18 +169,18 @@ const PaymentSuccess = () => {
     return () => clearTimeout(trackPurchaseWithDelay);
   }, [searchParams, location.state]);
 
-  // useEffect(() => {
-  //   if (redirectCountdown <= 0) {
-  //     navigate('/map/list', { replace: true });
-  //     return;
-  //   }
+  useEffect(() => {
+    if (redirectCountdown <= 0) {
+      navigate('/map/list', { replace: true });
+      return;
+    }
 
-  //   const timer = setTimeout(() => {
-  //     setRedirectCountdown((count) => count - 1);
-  //   }, 1000);
+    const timer = setTimeout(() => {
+      setRedirectCountdown((count) => count - 1);
+    }, 1000);
 
-  //   return () => clearTimeout(timer);
-  // }, [redirectCountdown, navigate]);
+    return () => clearTimeout(timer);
+  }, [redirectCountdown, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 py-8 px-4">

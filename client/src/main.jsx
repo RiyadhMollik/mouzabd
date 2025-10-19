@@ -16,6 +16,11 @@ if (import.meta.env.DEV) {
   import('./utils/gtmTestHelper').then(() => {
     console.log('🧪 GTM Test Helpers loaded in development mode');
   });
+  
+  import('./utils/gtmTagAssistantHelper').then(() => {
+    console.log('🏷️  GTM Tag Assistant Helper loaded');
+    console.log('💡 Run: window.quickGTMCheck() to verify GTM status');
+  });
 }
 
 const queryClient = new QueryClient({
