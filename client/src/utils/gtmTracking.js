@@ -7,7 +7,10 @@
  * Initialize GTM data layer if not exists
  */
 export const initDataLayer = () => {
-  window.dataLayer = window.dataLayer || [];
+  if (typeof window !== 'undefined') {
+    window.dataLayer = window.dataLayer || [];
+    console.log('🔧 GTM dataLayer initialized:', window.dataLayer.length, 'events');
+  }
 };
 
 /**
@@ -16,12 +19,41 @@ export const initDataLayer = () => {
  * @param {Object} data - Event data
  */
 export const pushToDataLayer = (event, data) => {
+  if (typeof window === 'undefined') {
+    console.warn('⚠️ Window not available, cannot push to dataLayer');
+    return;
+  }
+
   initDataLayer();
-  window.dataLayer.push({
+  
+  const eventData = {
     event,
+    ecommerce: null, // Clear previous ecommerce data
     ...data,
-  });
-  console.log('📊 GTM Event:', event, data);
+  };
+
+  // For e-commerce events, wrap data in ecommerce object
+  if (['purchase', 'begin_checkout', 'add_to_cart', 'view_cart', 'add_payment_info', 'view_item_list', 'select_item'].includes(event)) {
+    const ecommerceData = { ...data };
+    delete ecommerceData.event;
+    
+    window.dataLayer.push({
+      event,
+      ecommerce: null // Clear previous ecommerce object
+    });
+    
+    window.dataLayer.push({
+      event,
+      ecommerce: ecommerceData
+    });
+    
+    console.log('📊 GTM E-commerce Event:', event, ecommerceData);
+  } else {
+    window.dataLayer.push(eventData);
+    console.log('📊 GTM Event:', event, data);
+  }
+  
+  console.log('✅ DataLayer length:', window.dataLayer.length);
 };
 
 /**
@@ -246,13 +278,25 @@ export const trackPurchase = (
   totalAmount,
   options = {}
 ) => {
-  const items = files.map((file, index) => 
-    formatFileItem(file, index, packageInfo)
-  );
+  console.log('🔍 trackPurchase called with:', {
+    transactionId,
+    filesCount: files?.length,
+    files,
+    packageInfo,
+    totalAmount,
+    options
+  });
+
+  // Handle case where files might be empty
+  const items = Array.isArray(files) && files.length > 0
+    ? files.map((file, index) => formatFileItem(file, index, packageInfo))
+    : [formatPackageItem(packageInfo, 1)]; // Fallback to package item if no files
+
+  console.log('📦 Formatted items:', items);
 
   const eventData = {
     transaction_id: transactionId,
-    value: totalAmount,
+    value: parseFloat(totalAmount) || 0,
     currency: "BDT",
     items: items,
   };
@@ -263,8 +307,21 @@ export const trackPurchase = (
   if (options.coupon) eventData.coupon = options.coupon;
   if (options.paymentMethod) eventData.payment_type = options.paymentMethod;
   if (options.customerType) eventData.customer_type = options.customerType; // 'new' or 'returning'
+  if (options.paymentStatus) eventData.payment_status = options.paymentStatus;
+
+  console.log('📊 Pushing purchase event to dataLayer:', eventData);
+  
+  // Ensure dataLayer exists
+  if (typeof window === 'undefined') {
+    console.error('❌ Window object not available - running on server?');
+    return;
+  }
 
   pushToDataLayer('purchase', eventData);
+  
+  // Verify it was pushed
+  console.log('✅ Current dataLayer:', window.dataLayer);
+  console.log('✅ Last event:', window.dataLayer[window.dataLayer.length - 1]);
 };
 
 /**
