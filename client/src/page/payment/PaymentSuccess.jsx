@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle, Home, ShoppingBag, Mail, Receipt, Headphones, ArrowRight, Download, Info } from 'lucide-react';
 import { trackPurchase, initDataLayer } from '../../utils/gtmTracking';
@@ -10,6 +10,7 @@ const PaymentSuccess = () => {
   const [merchantTransactionId, setMerchantTransactionId] = useState(null);
   const [redirectCountdown, setRedirectCountdown] = useState(3);
   const [gtmStatus, setGtmStatus] = useState({ tracked: false, method: null }); // Track GTM status
+  const hasTracked = useRef(false); // Prevent double-firing in React StrictMode
 
   useEffect(() => {
     const transactionId = searchParams.get('transaction') || searchParams.get('merchantTransactionId');
@@ -20,6 +21,12 @@ const PaymentSuccess = () => {
 
   // GTM: Track purchase event on success page load
   useEffect(() => {
+    // Prevent double-firing in React StrictMode
+    if (hasTracked.current) {
+      console.log('⏭️ GTM purchase already tracked, skipping duplicate');
+      return;
+    }
+    
     // Re-initialize GTM dataLayer (in case it was lost during redirect)
     initDataLayer();
     console.log('🔧 Re-initialized GTM dataLayer on PaymentSuccess page');
@@ -98,6 +105,7 @@ const PaymentSuccess = () => {
             paymentStatus: 'success'
           }
         );
+        hasTracked.current = true; // Mark as tracked
         setGtmStatus({ tracked: true, method: storageSource }); // Update GTM status
       } else {
         // Track with package info only if no files
@@ -112,6 +120,7 @@ const PaymentSuccess = () => {
             paymentStatus: 'success'
           }
         );
+        hasTracked.current = true; // Mark as tracked
         setGtmStatus({ tracked: true, method: `${storageSource} (no files)` }); // Update GTM status
       }
     } else {
@@ -157,6 +166,7 @@ const PaymentSuccess = () => {
             paymentStatus: 'success'
           }
         );
+        hasTracked.current = true; // Mark as tracked
         setGtmStatus({ tracked: true, method: 'URL params' }); // Update GTM status
       } else {
         console.error('❌ Cannot track purchase - no order details and no amount in URL');

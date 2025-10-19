@@ -21,6 +21,11 @@ if (import.meta.env.DEV) {
     console.log('🏷️  GTM Tag Assistant Helper loaded');
     console.log('💡 Run: window.quickGTMCheck() to verify GTM status');
   });
+  
+  import('./utils/gtmDoubleFireTest').then(() => {
+    console.log('🔥 GTM Double-Fire Test Tools loaded');
+    console.log('💡 Run: window.testDoubleFirePrevention() to check for duplicates');
+  });
 }
 
 const queryClient = new QueryClient({

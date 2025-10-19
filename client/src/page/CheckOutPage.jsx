@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { AuthContext } from '../provider/AuthProvider';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -73,6 +73,9 @@ const CheckoutPage = () => {
   const [selectedAdditionals, setSelectedAdditionals] = useState({});
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
+
+  // Ref to prevent double-firing GTM events in React StrictMode
+  const hasTrackedCheckout = useRef(false);
 
   const { data: extraFeatures, isLoading: featuresLoading, error: featuresError } = extrafeaturesData();
 
@@ -199,6 +202,12 @@ const CheckoutPage = () => {
 
   // GTM: Track begin_checkout when page loads
   useEffect(() => {
+    // Prevent double-firing in React StrictMode
+    if (hasTrackedCheckout.current) {
+      console.log('⏭️ GTM begin_checkout already tracked, skipping duplicate');
+      return;
+    }
+    
     if (selectedFiles && selectedFiles.length > 0 && packageInfo && totalAmount) {
       console.log('📊 GTM: Tracking begin_checkout');
       trackBeginCheckout(
@@ -210,6 +219,9 @@ const CheckoutPage = () => {
       
       // Also track view_cart
       trackViewCart(selectedFiles, packageInfo, totalAmount);
+      
+      // Mark as tracked
+      hasTrackedCheckout.current = true;
     }
   }, []); // Run once on mount
 
