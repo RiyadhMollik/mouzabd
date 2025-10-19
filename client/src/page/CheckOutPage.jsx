@@ -824,8 +824,30 @@ const handleSubmit = async () => {
         paymentMethod: 'eps',
         timestamp: new Date().toISOString()
       };
+      
+      console.log('📦 Preparing to store order details for GTM:', {
+        filesCount: selectedFiles?.length,
+        packageInfo: packageInfo?.field_name,
+        totalAmount: orderDetailsForGTM.totalAmount
+      });
+      
+      // Store in localStorage
       localStorage.setItem('pending_order_gtm', JSON.stringify(orderDetailsForGTM));
-      console.log('💾 Stored order details for GTM tracking:', orderDetailsForGTM);
+      
+      // Verify it was stored
+      const verified = localStorage.getItem('pending_order_gtm');
+      if (verified) {
+        console.log('✅ Successfully stored in localStorage, length:', verified.length);
+        console.log('✅ Verification - can retrieve:', JSON.parse(verified));
+      } else {
+        console.error('❌ Failed to store in localStorage!');
+      }
+      
+      console.log('💾 Order details stored in localStorage for GTM tracking');
+      
+      // ALSO store in sessionStorage (more reliable for redirects)
+      sessionStorage.setItem('pending_order_gtm', JSON.stringify(orderDetailsForGTM));
+      console.log('💾 Also stored in sessionStorage for better persistence');
       
       // Import EPS payment service dynamically
       const { default: epsPaymentService } = await import('../utils/epsPaymentService');
@@ -838,7 +860,8 @@ const handleSubmit = async () => {
           customer_phone: resolvedMobile || userdata?.phone || userdata?.phone_number,
           order_id: response.order_id || `ORDER_${Date.now()}`,
           description: `Purchase - ${packageInfo?.field_name || 'Service'}`,
-          success_url: `${window.location.origin}/payment/success`,
+          // Add order details to success URL as fallback (in case localStorage gets cleared)
+          success_url: `${window.location.origin}/payment/success?amount=${parseFloat(prices.finalTotal.toFixed(2))}&files=${selectedFiles?.length || 0}&package=${encodeURIComponent(packageInfo?.field_name || 'Package')}`,
           failure_url: `${window.location.origin}/payment/failed`,
           cancel_url: `${window.location.origin}/payment/cancelled`
         };

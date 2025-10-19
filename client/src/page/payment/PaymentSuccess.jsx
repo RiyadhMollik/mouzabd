@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle, Home, ShoppingBag, Mail, Receipt, Headphones, ArrowRight, Download, Info } from 'lucide-react';
-import { trackPurchase } from '../../utils/gtmTracking';
+import { trackPurchase, initDataLayer } from '../../utils/gtmTracking';
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -9,6 +9,7 @@ const PaymentSuccess = () => {
   const location = useLocation();
   const [merchantTransactionId, setMerchantTransactionId] = useState(null);
   const [redirectCountdown, setRedirectCountdown] = useState(3);
+  const [gtmStatus, setGtmStatus] = useState({ tracked: false, method: null }); // Track GTM status
 
   useEffect(() => {
     const transactionId = searchParams.get('transaction') || searchParams.get('merchantTransactionId');
@@ -19,25 +20,52 @@ const PaymentSuccess = () => {
 
   // GTM: Track purchase event on success page load
   useEffect(() => {
-    // Get transaction ID from URL
-    const transactionId = searchParams.get('transaction') || 
-                         searchParams.get('merchantTransactionId') ||
-                         `TXN_${Date.now()}`;
+    // Re-initialize GTM dataLayer (in case it was lost during redirect)
+    initDataLayer();
+    console.log('🔧 Re-initialized GTM dataLayer on PaymentSuccess page');
+    
+    // Add a small delay to ensure GTM is fully loaded after redirect
+    const trackPurchaseWithDelay = setTimeout(() => {
+      console.log('🎯 PaymentSuccess mounted - checking for order details...');
+      console.log('🔍 localStorage keys:', Object.keys(localStorage));
+      console.log('🔍 sessionStorage keys:', Object.keys(sessionStorage));
+      
+      // Get transaction ID from URL
+      const transactionId = searchParams.get('transaction') || 
+                           searchParams.get('merchantTransactionId') ||
+                           `TXN_${Date.now()}`;
+      
+      console.log('💳 Transaction ID:', transactionId);
 
-    // Try to get order details from localStorage (for EPS payments)
-    const storedOrderDetails = localStorage.getItem('pending_order_gtm');
-    let orderDetails = null;
-
-    if (storedOrderDetails) {
-      try {
-        orderDetails = JSON.parse(storedOrderDetails);
-        console.log('📦 Retrieved order details from localStorage:', orderDetails);
-        // Clear the stored data after retrieving it
-        localStorage.removeItem('pending_order_gtm');
-      } catch (error) {
-        console.error('❌ Error parsing stored order details:', error);
+      // Try sessionStorage first (more reliable for redirects)
+      let storedOrderDetails = sessionStorage.getItem('pending_order_gtm');
+      let storageSource = 'sessionStorage';
+      
+      // Fallback to localStorage
+      if (!storedOrderDetails) {
+        storedOrderDetails = localStorage.getItem('pending_order_gtm');
+        storageSource = 'localStorage';
       }
-    }
+      
+      console.log(`📦 Retrieved from ${storageSource}:`, storedOrderDetails?.substring(0, 100));
+      
+      let orderDetails = null;
+
+      if (storedOrderDetails) {
+        try {
+          orderDetails = JSON.parse(storedOrderDetails);
+          console.log(`✅ Successfully parsed order details from ${storageSource}:`, orderDetails);
+          
+          // Clear from both storages
+          localStorage.removeItem('pending_order_gtm');
+          sessionStorage.removeItem('pending_order_gtm');
+          console.log('🗑️ Cleared pending_order_gtm from both storages');
+        } catch (error) {
+          console.error('❌ Error parsing stored order details:', error);
+        }
+      } else {
+        console.warn('⚠️ No order details in localStorage or sessionStorage');
+      }
 
     // Fallback: Try to get from location state (for direct payments)
     if (!orderDetails && location.state?.orderDetails) {
@@ -52,11 +80,13 @@ const PaymentSuccess = () => {
         transactionId,
         totalAmount,
         paymentMethod,
-        filesCount: files?.length || 0
+        filesCount: files?.length || 0,
+        packageInfo: packageInfo
       });
 
       // Track the purchase
       if (files && files.length > 0) {
+        console.log('✅ Tracking purchase WITH files:', files.length);
         trackPurchase(
           transactionId,
           files,
@@ -68,9 +98,10 @@ const PaymentSuccess = () => {
             paymentStatus: 'success'
           }
         );
+        setGtmStatus({ tracked: true, method: storageSource }); // Update GTM status
       } else {
         // Track with package info only if no files
-        console.log('📊 GTM: Tracking purchase without file details');
+        console.log('⚠️ Tracking purchase WITHOUT files (using package info)');
         trackPurchase(
           transactionId,
           [],
@@ -81,25 +112,61 @@ const PaymentSuccess = () => {
             paymentStatus: 'success'
           }
         );
+        setGtmStatus({ tracked: true, method: `${storageSource} (no files)` }); // Update GTM status
       }
     } else {
       // Fallback: Track with minimal data from URL params
-      console.log('⚠️ No order details found, tracking with minimal data');
+      console.warn('⚠️ No order details found in localStorage or location.state');
+      console.log('🔍 Available URL params:', {
+        transaction: searchParams.get('transaction'),
+        merchantTransactionId: searchParams.get('merchantTransactionId'),
+        amount: searchParams.get('amount'),
+        files: searchParams.get('files'),
+        package: searchParams.get('package'),
+        allParams: Object.fromEntries(searchParams.entries())
+      });
       
       const amount = parseFloat(searchParams.get('amount') || 0);
+      const filesCount = parseInt(searchParams.get('files') || 0);
+      const packageName = searchParams.get('package') || 'Unknown Package';
+      
       if (amount > 0) {
+        console.log('💰 Tracking with URL params:', { amount, filesCount, packageName });
+        
+        // Create minimal package info from URL params
+        const minimalPackageInfo = {
+          field_name: packageName,
+        };
+        
+        // Create placeholder files if count is available
+        const placeholderFiles = filesCount > 0 
+          ? Array(filesCount).fill(null).map((_, idx) => ({
+              id: `file_${idx}`,
+              name: `File ${idx + 1}`,
+              mimeType: 'application/pdf'
+            }))
+          : [];
+        
         trackPurchase(
           transactionId,
-          [], // No file details available
-          { name: 'Unknown Package' },
+          placeholderFiles,
+          minimalPackageInfo,
           amount,
           {
             paymentMethod: 'eps',
             paymentStatus: 'success'
           }
         );
+        setGtmStatus({ tracked: true, method: 'URL params' }); // Update GTM status
+      } else {
+        console.error('❌ Cannot track purchase - no order details and no amount in URL');
+        setGtmStatus({ tracked: false, method: 'No data available' }); // Update GTM status
       }
     }
+    }, 1000); // 1 second delay to ensure GTM is loaded after redirect
+
+    // Cleanup timeout on unmount
+    return () => clearTimeout(trackPurchaseWithDelay);
   }, [searchParams, location.state]);
 
   // useEffect(() => {
@@ -204,6 +271,29 @@ const PaymentSuccess = () => {
         <div className="absolute bottom-1/4 left-1/3 w-2 h-2 bg-teal-400 rounded-full animate-float animation-delay-2000"></div>
         <div className="absolute top-2/3 right-1/4 w-3 h-3 bg-green-300 rounded-full animate-float animation-delay-3000"></div>
       </div>
+
+      {/* GTM Status Indicator (Development Only) */}
+      {import.meta.env.DEV && (
+        <div className={`fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-sm font-mono ${
+          gtmStatus.tracked 
+            ? 'bg-green-500 text-white' 
+            : 'bg-yellow-500 text-gray-900'
+        }`}>
+          <div className="flex items-center gap-2">
+            {gtmStatus.tracked ? (
+              <>
+                <CheckCircle className="w-4 h-4" />
+                <span>GTM: ✅ Tracked via {gtmStatus.method}</span>
+              </>
+            ) : (
+              <>
+                <Info className="w-4 h-4" />
+                <span>GTM: Waiting...</span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

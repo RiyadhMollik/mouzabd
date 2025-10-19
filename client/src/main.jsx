@@ -11,6 +11,13 @@ import { initDataLayer } from "./utils/gtmTracking";
 // Initialize GTM Data Layer
 initDataLayer();
 
+// Load GTM test helpers in development
+if (import.meta.env.DEV) {
+  import('./utils/gtmTestHelper').then(() => {
+    console.log('🧪 GTM Test Helpers loaded in development mode');
+  });
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
