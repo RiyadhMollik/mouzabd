@@ -167,6 +167,10 @@ const VideoPlayer = ({ video }) => {
       else if (url.includes('youtu.be/')) {
         videoId = url.split('youtu.be/')[1]?.split('?')[0];
       }
+      // Format: https://www.youtube.com/shorts/VIDEO_ID
+      else if (url.includes('youtube.com/shorts/')) {
+        videoId = url.split('youtube.com/shorts/')[1]?.split('?')[0];
+      }
       // Format: https://www.youtube.com/embed/VIDEO_ID
       else if (url.includes('youtube.com/embed/')) {
         return url; // Already in embed format
