@@ -124,6 +124,7 @@ export default function TutorialPage() {
 const VideoListItem = ({ video, isSelected, onSelect }) => {
   // Strip HTML tags from description
   const cleanDescription = video.descriptions?.replace(/<[^>]+>/g, '') || '';
+  console.log(video);
   
   return (
     <div
@@ -149,25 +150,63 @@ const VideoListItem = ({ video, isSelected, onSelect }) => {
 };
 
 // Memoized video player component
-const VideoPlayer = ({ video }) => (
-  <>
-    <div className="mt-4">
-      <h2 className="text-xl lg:text-2xl font-inter1 mb-2 font-bold">
-        {video.title}
-      </h2>
-    </div>
-    <div className="aspect-video bg-black rounded-lg mb-4 flex items-center justify-center">
-      <iframe
-        src={video.video_url}
-        title={video.title}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        className="w-full h-full rounded-xl"
-        loading="lazy"
-      />
-    </div>
-  </>
-);
+const VideoPlayer = ({ video }) => {
+  // Convert YouTube URL to embed format
+  const getEmbedUrl = (url) => {
+    if (!url) return '';
+    
+    try {
+      // Handle various YouTube URL formats
+      let videoId = null;
+      
+      // Format: https://www.youtube.com/watch?v=VIDEO_ID
+      if (url.includes('youtube.com/watch?v=')) {
+        videoId = url.split('v=')[1]?.split('&')[0];
+      }
+      // Format: https://youtu.be/VIDEO_ID
+      else if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1]?.split('?')[0];
+      }
+      // Format: https://www.youtube.com/embed/VIDEO_ID
+      else if (url.includes('youtube.com/embed/')) {
+        return url; // Already in embed format
+      }
+      
+      // If we found a video ID, return embed URL
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}`;
+      }
+      
+      // Fallback: return original URL
+      return url;
+    } catch (error) {
+      console.error('Error parsing video URL:', error);
+      return url;
+    }
+  };
+
+  const embedUrl = getEmbedUrl(video.video_url);
+  
+  return (
+    <>
+      <div className="mt-4">
+        <h2 className="text-xl lg:text-2xl font-inter1 mb-2 font-bold">
+          {video.title}
+        </h2>
+      </div>
+      <div className="aspect-video bg-black rounded-lg mb-4 flex items-center justify-center">
+        <iframe
+          src={embedUrl}
+          title={video.title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="w-full h-full rounded-xl"
+          loading="lazy"
+        />
+      </div>
+    </>
+  );
+};
 
 // Empty state component
 const EmptyVideoState = () => (

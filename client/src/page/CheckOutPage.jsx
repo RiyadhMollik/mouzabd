@@ -336,6 +336,15 @@ const CheckoutPage = () => {
   });
 
   const handleExtraFeatureToggle = (featureId) => {
+    // Prevent toggling the first feature (JPG/PDF ফাইল - always selected)
+    const sortedFeatures = getSortedExtraFeatures();
+    const isFirstFeature = sortedFeatures[0]?.id === featureId;
+    
+    if (isFirstFeature) {
+      console.log('First feature cannot be deselected');
+      return; // Don't allow toggling the first feature
+    }
+    
     const feature = extraFeatures?.data?.find(f => f.id === featureId);
     if (feature && feature.additionals && feature.additionals.length > 0) {
       setSelectedFeatureForModal(feature);
@@ -807,6 +816,17 @@ const handleSubmit = async () => {
       // Handle EPS payment
       console.log('💳 Processing EPS payment...');
       
+      // Store order details in localStorage before redirect (for GTM tracking on success page)
+      const orderDetailsForGTM = {
+        files: selectedFiles,
+        packageInfo: packageInfo,
+        totalAmount: parseFloat(prices.finalTotal.toFixed(2)),
+        paymentMethod: 'eps',
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('pending_order_gtm', JSON.stringify(orderDetailsForGTM));
+      console.log('💾 Stored order details for GTM tracking:', orderDetailsForGTM);
+      
       // Import EPS payment service dynamically
       const { default: epsPaymentService } = await import('../utils/epsPaymentService');
       
@@ -831,10 +851,14 @@ const handleSubmit = async () => {
           console.log('💳 Redirecting to EPS payment URL:', epsResponse.redirectUrl);
           window.location.href = epsResponse.redirectUrl;
         } else {
+          // Clear stored data if payment initialization fails
+          localStorage.removeItem('pending_order_gtm');
           throw new Error(epsResponse.message || 'Failed to initialize EPS payment');
         }
       } catch (epsError) {
         console.error('EPS Payment Error:', epsError);
+        // Clear stored data on error
+        localStorage.removeItem('pending_order_gtm');
         toast.error(`EPS Payment Error: ${epsError.message || 'Failed to process payment'}`);
         throw epsError;
       }

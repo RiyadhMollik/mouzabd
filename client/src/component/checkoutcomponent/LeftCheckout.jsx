@@ -362,13 +362,15 @@ const LeftCheckout = ({
               <Plus className="w-6 h-6 mr-2 text-green-600" />
               আপনার পছন্দ বেছে নিন
               <span className="ml-2 text-center text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                {extraFeatures.data.length} available
+                2 available
               </span>
             </h2>
 
             <div className="space-y-4">
-              {(packageInfo?.is_static ? getSortedExtraFeatures().slice(0, 1) : getSortedExtraFeatures()).map((feature) => {
-                const isSelected = selectedExtraFeatures.includes(feature.id);
+              {getSortedExtraFeatures().slice(0, 2).map((feature, index) => {
+                // First feature (JPG/PDF) is always selected and disabled
+                const isFirstFeature = index === 0;
+                const isSelected = isFirstFeature || selectedExtraFeatures.includes(feature.id);
                 const displayPrice = parseFloat(feature.offer_price || feature.price || 0);
                 const hasOffer = feature.offer_price && parseFloat(feature.offer_price) < parseFloat(feature.price);
                 const hasAdditionals = feature.additionals && feature.additionals.length > 0;
@@ -390,13 +392,13 @@ const LeftCheckout = ({
                 return (
                   <div 
                     key={feature.id}
-                    className={`border rounded-lg p-4 ${packageInfo?.is_static ? '' : 'cursor-pointer hover:border-gray-300 transition-all duration-200'} ${
+                    className={`border rounded-lg p-4 ${isFirstFeature ? '' : 'cursor-pointer hover:border-gray-300'} transition-all duration-200 ${
                       isSelected 
                         ? 'border-green-500 bg-green-50' 
                         : 'border-gray-200'
                     }`}
                     onClick={() => {
-                      if (!packageInfo?.is_static) {
+                      if (!isFirstFeature) {
                         handleExtraFeatureToggle(feature.id);
                       }
                     }}
@@ -407,12 +409,12 @@ const LeftCheckout = ({
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => {
-                            if (!packageInfo?.is_static) {
+                            if (!isFirstFeature) {
                               handleExtraFeatureToggle(feature.id);
                             }
                           }}
-                          disabled={packageInfo?.is_static}
-                          className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                          disabled={isFirstFeature}
+                          className={`w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 ${isFirstFeature ? 'cursor-not-allowed opacity-60' : ''}`}
                         />
                         <div>
                           <h4 className="font-medium text-gray-800 flex items-center">

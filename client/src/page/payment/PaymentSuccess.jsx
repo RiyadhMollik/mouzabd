@@ -1,15 +1,14 @@
-/**
- * Payment Success Page
- */
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { PaymentStatus } from '../../component/payment';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle, Home, ShoppingBag, Mail, Receipt, Headphones, ArrowRight, Download, Info } from 'lucide-react';
+import { trackPurchase } from '../../utils/gtmTracking';
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [merchantTransactionId, setMerchantTransactionId] = useState(null);
+  const [redirectCountdown, setRedirectCountdown] = useState(3);
 
   useEffect(() => {
     const transactionId = searchParams.get('transaction') || searchParams.get('merchantTransactionId');
@@ -17,6 +16,104 @@ const PaymentSuccess = () => {
       setMerchantTransactionId(transactionId);
     }
   }, [searchParams]);
+
+  // GTM: Track purchase event on success page load
+  useEffect(() => {
+    // Get transaction ID from URL
+    const transactionId = searchParams.get('transaction') || 
+                         searchParams.get('merchantTransactionId') ||
+                         `TXN_${Date.now()}`;
+
+    // Try to get order details from localStorage (for EPS payments)
+    const storedOrderDetails = localStorage.getItem('pending_order_gtm');
+    let orderDetails = null;
+
+    if (storedOrderDetails) {
+      try {
+        orderDetails = JSON.parse(storedOrderDetails);
+        console.log('📦 Retrieved order details from localStorage:', orderDetails);
+        // Clear the stored data after retrieving it
+        localStorage.removeItem('pending_order_gtm');
+      } catch (error) {
+        console.error('❌ Error parsing stored order details:', error);
+      }
+    }
+
+    // Fallback: Try to get from location state (for direct payments)
+    if (!orderDetails && location.state?.orderDetails) {
+      orderDetails = location.state.orderDetails;
+      console.log('📦 Retrieved order details from location state:', orderDetails);
+    }
+
+    if (orderDetails) {
+      const { files, packageInfo, totalAmount, paymentMethod } = orderDetails;
+      
+      console.log('📊 GTM: Tracking purchase on success page', {
+        transactionId,
+        totalAmount,
+        paymentMethod,
+        filesCount: files?.length || 0
+      });
+
+      // Track the purchase
+      if (files && files.length > 0) {
+        trackPurchase(
+          transactionId,
+          files,
+          packageInfo,
+          totalAmount,
+          {
+            paymentMethod: paymentMethod || 'eps',
+            customerType: 'returning', // Could be enhanced with actual user data
+            paymentStatus: 'success'
+          }
+        );
+      } else {
+        // Track with package info only if no files
+        console.log('📊 GTM: Tracking purchase without file details');
+        trackPurchase(
+          transactionId,
+          [],
+          packageInfo,
+          totalAmount,
+          {
+            paymentMethod: paymentMethod || 'eps',
+            paymentStatus: 'success'
+          }
+        );
+      }
+    } else {
+      // Fallback: Track with minimal data from URL params
+      console.log('⚠️ No order details found, tracking with minimal data');
+      
+      const amount = parseFloat(searchParams.get('amount') || 0);
+      if (amount > 0) {
+        trackPurchase(
+          transactionId,
+          [], // No file details available
+          { name: 'Unknown Package' },
+          amount,
+          {
+            paymentMethod: 'eps',
+            paymentStatus: 'success'
+          }
+        );
+      }
+    }
+  }, [searchParams, location.state]);
+
+  useEffect(() => {
+    if (redirectCountdown <= 0) {
+      navigate('/map/list', { replace: true });
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setRedirectCountdown((count) => count - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [redirectCountdown, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 py-8 px-4">
@@ -80,36 +177,14 @@ const PaymentSuccess = () => {
                 <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
               </button>
             </div>
-
-
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-600 animate-fade-in animation-delay-800">
+              <Info className="w-4 h-4 text-green-500" />
+              <span>Redirecting to your orders in {redirectCountdown} second{redirectCountdown === 1 ? '' : 's'}...</span>
+            </div>
 
             {/* Footer Note */}
 
           </div>
-          {/* Transaction Status Section */}
-          {merchantTransactionId && (
-            <div className="px-8 py-6 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-100 animate-fade-in animation-delay-200">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                    <Receipt className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Transaction ID</p>
-                    <p className="text-lg font-semibold text-gray-800">{merchantTransactionId}</p>
-                  </div>
-                </div>
-                <CheckCircle className="w-6 h-6 text-green-500" />
-              </div>
-              <PaymentStatus
-                merchantTransactionId={merchantTransactionId}
-                refreshInterval={5000}
-              />
-            </div>
-          )}
-
-          {/* Content Section */}
-
         </div>
 
         {/* Security Badge */}
