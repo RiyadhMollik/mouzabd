@@ -99,7 +99,7 @@ const MapModal = ({
   return (
     <div
       ref={modalRef}
-      className="fixed inset-0 bg-opacity-50 flex items-center justify-center p-4 z-80 backdrop-blur-sm"
+      className="fixed inset-0 flex items-center justify-center p-4 z-80 bg-transparent"
       onClick={handleModalOutsideClick}
     >
       <div
@@ -108,7 +108,7 @@ const MapModal = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+        <div className="flex items-center justify-between p-4 border-b ">
           <div className="flex items-center space-x-3">
             <h3 className="text-lg font-semibold text-gray-900 truncate max-w-md">
               {currentFile.name}

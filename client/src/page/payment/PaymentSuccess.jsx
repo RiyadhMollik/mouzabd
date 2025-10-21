@@ -224,10 +224,10 @@ const PaymentSuccess = () => {
             </div>
 
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
-              Payment Successful!
+              পেমেন্ট সফল হয়েছে!
             </h1>
             <p className="text-xl text-green-50 max-w-2xl mx-auto">
-              Thank you for your payment. Your transaction has been completed successfully.
+              আপনার পেমেন্টের জন্য ধন্যবাদ। আপনার লেনদেন সফলভাবে সম্পন্ন হয়েছে।
             </p>
 
             {/* Decorative elements */}
@@ -242,7 +242,7 @@ const PaymentSuccess = () => {
                 className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl flex items-center justify-center space-x-3 group"
               >
                 <Home className="w-5 h-5" />
-                <span>Go to Home</span>
+                <span>হোমে যান</span>
                 <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
               </button>
               <button
@@ -250,13 +250,13 @@ const PaymentSuccess = () => {
                 className="bg-white hover:bg-gray-50 text-gray-700 font-semibold py-4 px-6 rounded-xl border-2 border-gray-200 hover:border-gray-300 transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-3 group"
               >
                 <ShoppingBag className="w-5 h-5" />
-                <span>View Orders</span>
+                <span>অর্ডার দেখুন</span>
                 <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
               </button>
             </div>
             <div className="flex items-center justify-center gap-2 text-sm text-gray-600 animate-fade-in animation-delay-800">
               <Info className="w-4 h-4 text-green-500" />
-              <span>Redirecting to your orders in {redirectCountdown} second{redirectCountdown === 1 ? '' : 's'}...</span>
+              <span>{redirectCountdown} সেকেন্ড পরে আপনাকে অর্ডার পাতায় নিয়ে যাওয়া হবে...</span>
             </div>
 
             {/* Footer Note */}
@@ -268,7 +268,7 @@ const PaymentSuccess = () => {
         <div className="text-center animate-fade-in animation-delay-1000">
           <div className="inline-flex items-center space-x-2 bg-white px-6 py-3 rounded-full shadow-lg">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-sm text-gray-600 font-medium">Secure Payment Protected</span>
+            <span className="text-sm text-gray-600 font-medium">নিরাপদ পেমেন্ট সুরক্ষিত</span>
             <CheckCircle className="w-4 h-4 text-green-500" />
           </div>
         </div>
@@ -293,12 +293,12 @@ const PaymentSuccess = () => {
             {gtmStatus.tracked ? (
               <>
                 <CheckCircle className="w-4 h-4" />
-                <span>GTM: ✅ Tracked via {gtmStatus.method}</span>
+                <span>GTM: ✅ {gtmStatus.method} মাধ্যমে ট্র্যাক হয়েছে</span>
               </>
             ) : (
               <>
                 <Info className="w-4 h-4" />
-                <span>GTM: Waiting...</span>
+                <span>GTM: অপেক্ষায়...</span>
               </>
             )}
           </div>
