@@ -50,7 +50,7 @@ export default function MapList() {
       const decoded = decodeToken(token);
       setDecodedToken(decoded);
 
-      const response = await fetch(`${getBaseUrl()}/user-files/`, {
+      const response = await fetch(`${getBaseUrl()}/user-files-batch/`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
